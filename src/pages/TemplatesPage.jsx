@@ -176,8 +176,8 @@ export default function TemplatesPage() {
 
           {filtered.length > 0 ? (
             <div className="templates-grid-results">
-              {filtered.map(t => (
-                <TemplateCard key={t.slug} template={t} />
+              {filtered.map((t, idx) => (
+                <TemplateCard key={t.slug} template={t} index={idx} />
               ))}
             </div>
           ) : (

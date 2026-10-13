@@ -233,14 +233,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .nav__links a {
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: 1.05rem;
+  font-weight: 600;
   color: var(--text-secondary);
   transition: color var(--duration-fast) var(--ease);
 }
 
 .nav__links a:hover { color: var(--text-primary); }
-.nav__links a.active { color: var(--brand-gold); }
+.nav__links a.active { color: var(--brand-gold); font-weight: 700; }
 
 .nav__cta {
   display: flex;

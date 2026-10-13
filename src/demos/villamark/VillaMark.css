@@ -1,240 +1,1602 @@
-/* ── VillaMark Styles ──────────────────────────────────────────────────────── */
+/* ── VillaMark Luxury Villa Styles ────────────────────────────────────────── */
+/* Preserving the signature cream, royal navy, and amber-gold palette */
+
+:root {
+  --vm-gold: #b47506;
+  --vm-gold-dark: #92400e;
+  --vm-gold-light: #fef3c7;
+  --vm-cream-bg: #fdfbf7;
+  --vm-cream-card: #ffffff;
+  --vm-navy-text: #0f172a;
+  --vm-border: rgba(180, 117, 6, 0.2);
+}
+
+/* ── Hero Section ────────────────────────────────────────────────────────── */
 .vm-hero {
   position: relative;
-  min-height: 80vh;
+  min-height: 86vh;
   display: flex;
   align-items: center;
-  background: linear-gradient(135deg, #0d0a05 0%, #1a1408 50%, #0d0a05 100%);
+  background-color: #0b0f19;
+  background-image: url('/images/villamark-hero.jpg');
+  background-size: cover;
+  background-position: center 35%;
+  background-repeat: no-repeat;
   overflow: hidden;
 }
-.vm-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle at 20% 50%, rgba(167,138,90,0.12), transparent 60%);
-}
+
+/* Luxury cinematic gradient overlay preserving photo vibrancy & crystal-clear readability */
 .vm-hero__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to right, rgba(0,0,0,0.4), transparent);
+  background: linear-gradient(
+    100deg,
+    rgba(11, 15, 25, 0.92) 0%,
+    rgba(11, 15, 25, 0.82) 46%,
+    rgba(11, 15, 25, 0.45) 78%,
+    rgba(11, 15, 25, 0.22) 100%
+  );
+  backdrop-filter: blur(1px);
 }
+
+.vm-hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.8fr);
+  gap: 3.5rem;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  padding: 5rem 0 4rem;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .vm-hero__grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    padding: 3.5rem 0 3rem;
+  }
+}
+
 .vm-hero__content {
-  position: relative; z-index: 1;
-  padding: var(--space-20) 0;
+  position: relative;
+  max-width: 700px;
 }
+
+.vm-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(180, 117, 6, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #fbbf24;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+  backdrop-filter: blur(6px);
+}
+
 .vm-hero__title {
-  font-size: clamp(2rem, 4.5vw, 3.5rem);
+  font-size: clamp(2.4rem, 5.2vw, 3.8rem);
   font-weight: 800;
-  line-height: 1.2;
-  margin: var(--space-4) 0;
+  line-height: 1.15;
+  margin: 0 0 1.25rem;
+  color: #ffffff !important;
+  letter-spacing: -0.02em;
 }
-.vm-hero__sub { font-size: 1.0625rem; color: var(--text-secondary); max-width: 480px; margin-bottom: var(--space-8); line-height: 1.7; }
-.vm-logo { color: #a78a5a !important; }
 
-.vm-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); margin-top: var(--space-6); }
-@media (max-width: 600px) { .vm-type-grid { grid-template-columns: 1fr; } }
-
-.vm-type-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
-  text-align: center;
-  cursor: pointer;
-  transition: all var(--duration) var(--ease);
+.vm-hero__title .gradient-text {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
 }
-.vm-type-card:hover, .vm-type-card--active {
-  border-color: #a78a5a;
-  background: rgba(167,138,90,0.08);
+
+.vm-hero__sub {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.88) !important;
+  margin-bottom: 2rem;
+  max-width: 600px;
 }
-.vm-type-card__icon { font-size: 2rem; margin-bottom: var(--space-3); }
-.vm-type-card__label { font-weight: 700; margin-bottom: var(--space-1); }
-.vm-type-card__area { font-size: 0.875rem; color: var(--text-muted); margin-bottom: var(--space-1); }
-.vm-type-card__price { font-size: 1.0625rem; font-weight: 700; color: #a78a5a; margin-bottom: var(--space-1); }
-.vm-type-card__avail { font-size: 0.75rem; color: #34D399; }
 
-.vm-tab-bar { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-6); }
-.vm-plan-tabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-5); }
-
-.vm-detail { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-8); }
-@media (max-width: 700px) { .vm-detail { grid-template-columns: 1fr; } }
-
-.vm-detail__visual {
-  background: linear-gradient(135deg, #1a1408, #0d0a05);
-  border: 1px solid rgba(167,138,90,0.2);
-  border-radius: var(--radius-lg);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  min-height: 260px;
-  gap: var(--space-3);
-  color: var(--text-muted);
-  font-size: 0.9rem;
+.vm-hero-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(180, 117, 6, 0.35);
 }
-.vm-detail__house { font-size: 4rem; }
-.vm-detail__info { display: flex; flex-direction: column; gap: var(--space-5); }
-.vm-detail__info h3 { font-size: 1.5rem; font-weight: 800; }
-.vm-detail__specs { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
-.vm-detail__actions { display: flex; gap: var(--space-3); flex-wrap: wrap; }
 
-/* Villa Specs Box */
-.td-spec {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
+@media (max-width: 640px) {
+  .vm-hero-stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.vm-hero-stat-card {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
-.td-spec span {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.td-spec strong {
-  font-size: 1rem;
-  color: var(--text-primary);
-  font-weight: 700;
+
+.vm-hero-stat-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fbbf24 !important;
+  letter-spacing: -0.02em;
 }
 
-.vm-plan-visual {
+.vm-hero-stat-lbl {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* ── Hero Privilege Card (Floating Luxury Preview) ───────────────────────── */
+.vm-hero-privilege-card {
+  background: rgba(15, 23, 42, 0.82);
+  border: 1px solid rgba(180, 117, 6, 0.4);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(180, 117, 6, 0.15);
+  color: #ffffff;
+}
+
+.vm-privilege-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fbbf24;
+  background: rgba(180, 117, 6, 0.25);
+  border: 1px solid rgba(180, 117, 6, 0.5);
+  padding: 4px 10px;
+  border-radius: 9999px;
+  margin-bottom: 0.75rem;
+}
+
+.vm-privilege-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
+.vm-privilege-desc {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0 0 1.25rem;
+}
+
+.vm-privilege-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vm-privilege-opt {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vm-privilege-opt:hover,
+.vm-privilege-opt.active {
+  background: rgba(180, 117, 6, 0.22);
+  border-color: #fbbf24;
+  transform: translateX(4px);
+}
+
+.vm-privilege-guarantee {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* ── Villa Types Grid & Cards ────────────────────────────────────────────── */
+.vm-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 960px) {
+  .vm-type-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+.vm-type-card-pro {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border, rgba(0,0,0,0.08));
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  position: relative;
+}
+
+.vm-type-card-pro:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px rgba(180, 117, 6, 0.15);
+  border-color: #b47506;
+}
+
+.vm-type-card-pro--active {
+  border-color: #b47506 !important;
+  box-shadow: 0 12px 30px rgba(180, 117, 6, 0.18) !important;
+}
+
+.vm-type-card__media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #1e293b;
+}
+
+.vm-type-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.vm-type-card-pro:hover .vm-type-card__img {
+  transform: scale(1.06);
+}
+
+.vm-type-card__badge-top {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(15, 23, 42, 0.85);
+  color: #fef3c7;
+  border: 1px solid rgba(180, 117, 6, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.vm-type-card__badge-top.popular {
+  background: #b47506;
+  color: #ffffff;
+  border-color: #f59e0b;
+}
+
+.vm-type-card__status-pill {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(15, 23, 42, 0.85);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.vm-type-card__body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.vm-type-card__title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.vm-type-card__title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--vm-navy-text);
+  margin: 0;
+}
+
+[data-theme="dark"] .vm-type-card__title {
+  color: #f8fafc;
+}
+
+.vm-type-card__price-tag {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--vm-gold);
+}
+
+.vm-type-card__specs-row {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.vm-type-card__specs-row span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vm-type-card__features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.vm-type-card__features-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vm-type-card__footer {
+  margin-top: auto;
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Detailed Villa View ─────────────────────────────────────────────────── */
+.vm-detail-pro {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 2.5rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .vm-detail-pro {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vm-detail__gallery-frame {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: #0f172a;
+}
+
+.vm-detail__gallery-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.vm-detail__quick-info {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-8);
-  min-height: 280px;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: var(--space-5);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
-.vm-plan-label { font-size: 0.875rem; color: var(--text-muted); font-weight: 600; }
-.vm-plan-rooms {
-  display: flex; gap: var(--space-3); flex-wrap: wrap; justify-content: center;
+
+.vm-detail__specs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+  margin: 1.5rem 0;
 }
-.vm-plan-rooms span {
-  padding: var(--space-3) var(--space-5);
-  background: rgba(167,138,90,0.08);
-  border: 1px solid rgba(167,138,90,0.2);
-  border-radius: var(--radius-md);
+
+/* ── Architectural Floor Plan Section ────────────────────────────────────── */
+.vm-floorplan-container {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .vm-floorplan-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vm-floorplan-viewport {
+  background: #ffffff;
+  border: 1px solid rgba(180, 117, 6, 0.3);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+[data-theme="dark"] .vm-floorplan-viewport {
+  background: #0c1220;
+  border-color: rgba(180, 117, 6, 0.35);
+}
+
+.vm-floorplan-meta-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vm-floorplan-badge {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--vm-gold);
+}
+
+.vm-btn-icon-label {
+  background: rgba(180, 117, 6, 0.1);
+  border: 1px solid rgba(180, 117, 6, 0.25);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--vm-gold);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vm-btn-icon-label:hover {
+  background: var(--vm-gold);
+  color: #ffffff;
+}
+
+.vm-floorplan-svg-wrap {
+  width: 100%;
+  aspect-ratio: 600 / 420;
+  border: 1px dashed rgba(180, 117, 6, 0.25);
+  border-radius: 12px;
+  padding: 8px;
+  background: #fdfbf7;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+[data-theme="dark"] .vm-floorplan-svg-wrap {
+  background: #060a12;
+}
+
+.vm-arch-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.vm-svg-dim {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #92400e;
+  letter-spacing: 0.05em;
+}
+
+[data-theme="dark"] .vm-svg-dim {
+  fill: #fbbf24;
+}
+
+.vm-svg-room {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vm-svg-room:hover, .vm-svg-room.active {
+  filter: drop-shadow(0 0 6px rgba(180, 117, 6, 0.5));
+}
+
+.vm-svg-room-name {
+  font-size: 11px;
+  font-weight: 800;
+  fill: #0f172a;
+  letter-spacing: 0.02em;
+}
+
+[data-theme="dark"] .vm-svg-room-name {
+  fill: #f8fafc;
+}
+
+.vm-svg-room-dim {
+  font-size: 9px;
+  font-weight: 600;
+  fill: #64748b;
+}
+
+[data-theme="dark"] .vm-svg-room-dim {
+  fill: #94a3b8;
+}
+
+.vm-svg-tag {
+  font-size: 8px;
+  fill: #b47506;
+  font-weight: bold;
+}
+
+.vm-floorplan-caption {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vm-floorplan-table-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.vm-floorplan-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.vm-floorplan-table-header h4 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--vm-navy-text);
+}
+
+[data-theme="dark"] .vm-floorplan-table-header h4 {
+  color: #f8fafc;
+}
+
+.vm-plan-area-badge {
+  background: rgba(180, 117, 6, 0.12);
+  color: var(--vm-gold);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.8125rem;
+}
+
+.vm-room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.vm-room-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
 
-/* ── Light Mode Overrides for VillaMark ───────────────────────────────────── */
-[data-theme="light"] .vm-hero {
-  background: linear-gradient(135deg, #fdfbf7 0%, #fef3c7 45%, #fdfbf7 100%);
+.vm-room-check {
+  color: #22c55e;
+  font-weight: bold;
 }
-[data-theme="light"] .vm-hero::before {
-  background-image: radial-gradient(circle at 20% 50%, rgba(180, 117, 6, 0.1), transparent 60%);
+
+.vm-plan-highlights-box {
+  background: rgba(180, 117, 6, 0.06);
+  border: 1px solid rgba(180, 117, 6, 0.2);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
 }
-[data-theme="light"] .vm-hero__overlay {
-  background: linear-gradient(to right, rgba(255, 255, 255, 0.2), transparent);
+
+.vm-plan-hl-title {
+  font-weight: 700;
+  color: var(--vm-gold);
+  margin-bottom: 6px;
 }
-[data-theme="light"] .vm-hero__title {
-  color: #0f172a;
+
+.vm-plan-highlights-box ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
-[data-theme="light"] .vm-hero__sub {
-  color: #475569;
+
+.vm-floorplan-action-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
-[data-theme="light"] .vm-type-card {
-  background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.08);
+
+/* ── Amenities Grid ──────────────────────────────────────────────────────── */
+.vm-amenities-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+@media (max-width: 900px) {
+  .vm-amenities-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+
+.vm-amenity-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
-[data-theme="light"] .vm-type-card:hover,
-[data-theme="light"] .vm-type-card--active {
+
+.vm-amenity-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(180, 117, 6, 0.12);
   border-color: #b47506;
-  background: #fffbeb;
-  box-shadow: 0 8px 24px rgba(180, 117, 6, 0.12);
-}
-[data-theme="light"] .vm-type-card__label {
-  color: #0f172a;
-}
-[data-theme="light"] .vm-type-card__area {
-  color: #64748b;
-}
-[data-theme="light"] .vm-type-card__price {
-  color: #b47506;
 }
 
-[data-theme="light"] .vm-detail__visual {
-  background: linear-gradient(135deg, #fefce8, #fef3c7);
-  border-color: rgba(180, 117, 6, 0.25);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
-  color: #78350f;
-}
-[data-theme="light"] .vm-detail__info h3 {
-  color: #0f172a;
+.vm-amenity-card__media {
+  aspect-ratio: 16 / 10;
+  position: relative;
+  overflow: hidden;
 }
 
-[data-theme="light"] .td-spec {
+.vm-amenity-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.vm-amenity-card:hover .vm-amenity-card__img {
+  transform: scale(1.05);
+}
+
+.vm-amenity-card__icon-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(180, 117, 6, 0.3);
+}
+
+.vm-amenity-card__body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.vm-amenity-card__title {
+  font-size: 1.1rem;
+  font-weight: 750;
+  margin: 0 0 4px;
+  color: var(--vm-navy-text);
+}
+
+[data-theme="dark"] .vm-amenity-card__title {
+  color: #f8fafc;
+}
+
+.vm-amenity-card__sub {
+  font-size: 0.75rem;
+  color: var(--vm-gold);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.6rem;
+}
+
+.vm-amenity-card__desc {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ── Gallery Section ─────────────────────────────────────────────────────── */
+.vm-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.75rem;
+}
+
+@media (max-width: 900px) {
+  .vm-gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 580px) {
+  .vm-gallery-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vm-gallery-card {
+  position: relative;
+  aspect-ratio: 16 / 11;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+.vm-gallery-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.vm-gallery-card:hover .vm-gallery-card__img {
+  transform: scale(1.08);
+}
+
+.vm-gallery-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(15, 23, 42, 0.2) 60%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.25rem;
+  opacity: 0.92;
+  transition: opacity 0.3s ease;
+}
+
+.vm-gallery-card__tag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #fbbf24;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.vm-gallery-card__title {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ── Lightbox Modal ──────────────────────────────────────────────────────── */
+.vm-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  animation: fadeIn 0.25s ease;
+}
+
+.vm-lightbox__content {
+  position: relative;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
   background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.08);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-}
-[data-theme="light"] .td-spec span {
-  color: #64748b;
-}
-[data-theme="light"] .td-spec strong {
-  color: #0f172a;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
 }
 
-[data-theme="light"] .vm-plan-visual {
-  background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.08);
+[data-theme="dark"] .vm-lightbox__content {
+  background: #0f172a;
+}
+
+.vm-lightbox__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.vm-lightbox__close:hover {
+  background: #b47506;
+}
+
+.vm-lightbox__viewport {
+  max-height: 75vh;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+}
+
+[data-theme="dark"] .vm-lightbox__viewport {
+  background: #090e18;
+}
+
+.vm-lightbox__viewport img {
+  max-width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+}
+
+.vm-lightbox__caption {
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+}
+
+.vm-lightbox__caption h4 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+  color: var(--vm-navy-text);
+}
+
+[data-theme="dark"] .vm-lightbox__caption h4 {
+  color: #f8fafc;
+}
+
+.vm-lightbox__caption p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ── Location & Landmarks ────────────────────────────────────────────────── */
+.vm-location-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 1.75rem;
+}
+
+@media (max-width: 800px) {
+  .vm-location-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vm-landmark-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 0.6rem;
+  transition: border-color 0.2s ease;
+}
+
+.vm-landmark-card:hover {
+  border-color: #b47506;
+}
+
+.vm-landmark-place {
+  font-weight: 650;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.vm-landmark-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8125rem;
+}
+
+.vm-landmark-dist {
+  color: var(--text-muted);
+}
+
+.vm-landmark-time {
+  font-weight: 700;
+  color: var(--vm-gold);
+}
+
+.vm-map-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* ── About Section Highlights ────────────────────────────────────────────── */
+.vm-about-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin: 2.5rem 0;
+}
+
+@media (max-width: 800px) {
+  .vm-about-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.vm-about-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  text-align: center;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
-[data-theme="light"] .vm-plan-label {
-  color: #475569;
-}
-[data-theme="light"] .vm-plan-rooms span {
-  background: #f8fafc;
-  border-color: rgba(0, 0, 0, 0.08);
-  color: #334155;
+
+.vm-about-stat-num {
+  font-size: 2.2rem;
+  font-weight: 850;
+  color: var(--vm-gold);
+  line-height: 1;
+  margin-bottom: 0.5rem;
 }
 
-[data-theme="light"] .chip {
-  background: #ffffff;
-  color: #475569;
-  border-color: rgba(0, 0, 0, 0.12);
+.vm-about-stat-title {
+  font-weight: 750;
+  font-size: 0.95rem;
+  margin-bottom: 0.35rem;
 }
-[data-theme="light"] .chip:hover {
+
+.vm-about-stat-desc {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.vm-specs-table {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.vm-spec-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.vm-spec-item h4 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  color: var(--vm-gold);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vm-spec-item p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ── Floating WhatsApp Button ────────────────────────────────────────────── */
+.vm-whatsapp-float {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #25d366;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.45);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+  text-decoration: none;
+}
+
+.vm-whatsapp-float:hover {
+  transform: scale(1.1);
+  box-shadow: 0 12px 30px rgba(37, 211, 102, 0.6);
+  color: #ffffff;
+}
+
+.vm-whatsapp-pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #25d366;
+  opacity: 0.7;
+  animation: pulseWa 2s infinite;
+}
+
+@keyframes pulseWa {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Chip and Button Overrides for VillaMark ── */
+.chip, button.chip {
+  background: var(--bg-card, #ffffff);
+  color: var(--text-secondary, #475569);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.12));
+  padding: 8px 18px;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip:hover, button.chip:hover {
+  border-color: #b47506;
   color: #0f172a;
-  border-color: rgba(180, 117, 6, 0.4);
 }
-[data-theme="light"] .chip.active {
+
+.chip.active, button.chip.active,
+[data-theme="light"] .chip.active,
+[data-theme="light"] button.chip.active,
+[data-theme="dark"] .chip.active,
+[data-theme="dark"] button.chip.active {
   background: #b47506 !important;
   color: #ffffff !important;
   border-color: #b47506 !important;
+  box-shadow: 0 4px 14px rgba(180, 117, 6, 0.25);
 }
 
-[data-theme="light"] .pm-section__title {
+/* ── Light Mode Base Overrides ── */
+[data-theme="light"] .pm-demo {
+  background-color: #fdfbf7;
   color: #0f172a;
 }
 
-[data-theme="light"] .pm-gallery__item {
-  background: linear-gradient(135deg, #fef9c3 0%, #fef3c7 60%, #fffbeb 100%) !important;
-  border-color: rgba(180, 117, 6, 0.25) !important;
-  color: #854d0e !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+/* ── Differentiated Home Page Sections ───────────────────────────────────── */
+.vm-lifestyle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+  margin-top: 2rem;
 }
 
-[data-theme="light"] .plot-modal {
+@media (max-width: 960px) {
+  .vm-lifestyle-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 600px) {
+  .vm-lifestyle-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vm-lifestyle-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.vm-lifestyle-card:hover {
+  transform: translateY(-5px);
+  border-color: #b47506;
+  box-shadow: 0 12px 28px rgba(180, 117, 6, 0.12);
+}
+
+.vm-lifestyle-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(180, 117, 6, 0.12);
+  color: var(--vm-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: 1.25rem;
+  border: 1px solid rgba(180, 117, 6, 0.25);
+}
+
+.vm-lifestyle-card h3 {
+  font-size: 1.15rem;
+  font-weight: 750;
+  margin: 0 0 0.5rem;
+  color: var(--vm-navy-text);
+}
+
+[data-theme="dark"] .vm-lifestyle-card h3 {
+  color: #f8fafc;
+}
+
+.vm-lifestyle-card p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.65;
+  margin: 0 0 1rem;
+  flex-grow: 1;
+}
+
+.vm-lifestyle-metric {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--vm-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+/* Luxury Clubhouse / Spotlight Split Section */
+.vm-spotlight-box {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 0;
+  align-items: stretch;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  margin-top: 2rem;
+}
+
+@media (max-width: 900px) {
+  .vm-spotlight-box {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vm-spotlight-media {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 380px;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .vm-spotlight-media {
+    min-height: 260px;
+    height: 280px;
+    aspect-ratio: 16 / 10;
+  }
+}
+
+.vm-spotlight-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.vm-spotlight-content {
+  padding: 2.75rem 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 600px) {
+  .vm-spotlight-content {
+    padding: 1.5rem;
+  }
+}
+
+.vm-spotlight-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 1.25rem 0 1.75rem;
+}
+
+.vm-spotlight-pill {
+  background: rgba(180, 117, 6, 0.08);
+  border: 1px solid rgba(180, 117, 6, 0.2);
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+/* Villa Investment & EMI Calculator */
+.vm-calculator-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+  margin-top: 2rem;
+}
+
+.vm-calc-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 2.5rem;
+  align-items: center;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 860px) {
+  .vm-calc-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vm-calc-result-box {
+  background: linear-gradient(135deg, rgba(180, 117, 6, 0.08) 0%, rgba(245, 158, 11, 0.14) 100%);
+  border: 1px solid rgba(180, 117, 6, 0.35);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.vm-calc-emi-val {
+  font-size: 2.5rem;
+  font-weight: 850;
+  color: var(--vm-gold);
+  letter-spacing: -0.02em;
+  margin: 0.5rem 0;
+}
+
+/* VIP Chauffeur Banner */
+.vm-vip-banner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+  border-radius: 20px;
+  padding: 3rem;
+  margin-top: 3.5rem;
+  border: 1px solid rgba(180, 117, 6, 0.35);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="light"] .vm-vip-banner {
+  background: linear-gradient(135deg, #fefce8 0%, #fef3c7 50%, #fdfbf7 100%);
+  color: #0f172a;
+  border-color: rgba(180, 117, 6, 0.35);
+}
+
+.vm-vip-banner__content {
+  max-width: 600px;
+}
+
+.vm-vip-banner__title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+}
+
+.vm-vip-perks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+}
+
+.vm-vip-perk-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── VillaMark 4-Column Luxury Footer ─────────────────────────────────────── */
+.vm-footer {
+  background: var(--bg-card, #ffffff);
+  border-top: 1px solid var(--border, rgba(180, 117, 6, 0.2));
+  padding: 4.5rem 1.5rem 2rem;
+  margin-top: 4rem;
+}
+
+[data-theme="light"] .vm-footer {
+  background: #fcfaf6;
+  border-top-color: rgba(180, 117, 6, 0.2);
+}
+
+[data-theme="dark"] .vm-footer {
+  background: #090e18;
+  border-top-color: rgba(180, 117, 6, 0.25);
+}
+
+.vm-footer__container {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1.1fr 1.2fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.vm-footer__brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.1rem;
+}
+
+.vm-footer__brand-icon {
+  background: linear-gradient(135deg, #b47506, #d97706);
+  color: #ffffff;
+  font-weight: 850;
+  font-size: 0.95rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(180, 117, 6, 0.3);
+}
+
+.vm-footer__brand-name {
+  font-family: var(--font-display, serif);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--vm-navy-text, #0f172a);
+  letter-spacing: -0.02em;
+}
+
+[data-theme="dark"] .vm-footer__brand-name {
+  color: #ffffff;
+}
+
+.vm-footer__brand-name span {
+  color: var(--vm-gold, #b47506);
+}
+
+.vm-footer__desc {
+  color: var(--text-muted, #64748b);
+  font-size: 0.875rem;
+  line-height: 1.65;
+  max-width: 320px;
+  margin: 0 0 1.5rem;
+}
+
+.vm-footer__col-title {
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: var(--vm-gold, #b47506);
+  margin: 0 0 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vm-footer__links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.vm-footer__link {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #475569);
+  font-size: 0.875rem;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.vm-footer__link:hover {
+  color: var(--vm-gold, #b47506);
+  transform: translateX(3px);
+}
+
+.vm-footer__contact-item {
+  color: var(--text-secondary, #475569);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0 0 0.65rem;
+}
+
+.vm-footer__bottom {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(180, 117, 6, 0.15);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted, #64748b);
+}
+
+@media (max-width: 1024px) {
+  .vm-footer__container {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .vm-footer {
+    padding: 3rem 1.25rem 2rem;
+  }
+  .vm-footer__container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .vm-footer__bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* ── Free Site Visit Animated Button (VillaMark Gold) ───────────────────── */
+@keyframes vmFreeVisitPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(180, 117, 6, 0.65), 0 4px 14px rgba(180, 117, 6, 0.35);
+  }
+  65% {
+    box-shadow: 0 0 0 12px rgba(180, 117, 6, 0), 0 6px 20px rgba(180, 117, 6, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(180, 117, 6, 0), 0 4px 14px rgba(180, 117, 6, 0.35);
+  }
+}
+
+@keyframes vmCarNudge {
+  0%, 75%, 100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  80% {
+    transform: translateX(3px) rotate(-4deg);
+  }
+  85% {
+    transform: translateX(-1px) rotate(2deg);
+  }
+  90% {
+    transform: translateX(2px) rotate(0deg);
+  }
+}
+
+.vm-btn-free-visit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #92400e 0%, #b47506 50%, #d97706 100%);
+  color: #ffffff !important;
+  font-weight: 750;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  border: 1px solid rgba(254, 243, 199, 0.35);
+  cursor: pointer;
+  overflow: hidden;
+  animation: vmFreeVisitPulse 2.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(180, 117, 6, 0.35);
+}
+
+.vm-btn-free-visit::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 100%
+  );
+  transform: skewX(-22deg);
+  animation: freeVisitShimmer 3.8s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.vm-btn-free-visit:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 8px 24px rgba(180, 117, 6, 0.55), 0 0 16px rgba(251, 191, 36, 0.4);
+}
+
+.vm-btn-free-visit__icon {
+  display: inline-block;
+  font-size: 1.1rem;
+  animation: vmCarNudge 4s infinite ease-in-out;
+}
+
+.vm-btn-free-visit__tag {
   background: #ffffff;
-  color: #0f172a;
-  border-color: rgba(180, 117, 6, 0.3);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
+  color: #92400e;
+  font-size: 0.65rem;
+  font-weight: 850;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  line-height: 1.3;
 }
 
-[data-theme="light"] .plot-modal h3 {
-  color: #0f172a;
-}
-
-[data-theme="light"] .plot-modal input,
-[data-theme="light"] .plot-modal select {
-  background: #f8fafc;
-  color: #0f172a;
-  border-color: rgba(0, 0, 0, 0.12);
-}
 

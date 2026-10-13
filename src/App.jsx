@@ -13,6 +13,7 @@ import ContactPage from './pages/ContactPage.jsx';
 
 // Real Estate Live Demos
 import PlotMarkDemo from './demos/plotmark/PlotMark.jsx';
+import PlotVentureDemo from './demos/plotventure/PlotVenture.jsx';
 import VillaMarkDemo from './demos/villamark/VillaMark.jsx';
 import FlatMarkDemo from './demos/flatmark/FlatMark.jsx';
 import DevMarkDemo from './demos/developer/DevMark.jsx';
@@ -85,7 +86,7 @@ function ScrollToTop() {
 
 export default function App() {
   const location = useLocation();
-  const isDemo = location.pathname.startsWith('/demo');
+  const isDemo = location.pathname.startsWith('/demo') || location.pathname.endsWith('/demo');
 
   return (
     <ErrorBoundary>
@@ -103,6 +104,8 @@ export default function App() {
 
           {/* Live Demos - Real Estate */}
           <Route path="/demo/plotmark" element={<PlotMarkDemo />} />
+          <Route path="/demo/plotventure" element={<PlotVentureDemo />} />
+          <Route path="/templates/plotventure/demo" element={<PlotVentureDemo />} />
           <Route path="/demo/villamark" element={<VillaMarkDemo />} />
           <Route path="/demo/flatmark" element={<FlatMarkDemo />} />
           <Route path="/demo/developer" element={<DevMarkDemo />} />

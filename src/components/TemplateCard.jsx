@@ -15,8 +15,15 @@ const INDUSTRY_COLORS = {
   technology: '#0284C7',
 };
 
-export default function TemplateCard({ template }) {
+export default function TemplateCard({ template, index, cardNumber }) {
   const accentColor = INDUSTRY_COLORS[template.industry] || '#C8860A';
+
+  // Generate card number dynamically starting at #01
+  const displayNum = cardNumber != null
+    ? (typeof cardNumber === 'number' ? String(cardNumber).padStart(2, '0') : String(cardNumber))
+    : index != null
+      ? String(index + 1).padStart(2, '0')
+      : (template.templateNumber ? String(template.templateNumber).padStart(2, '0') : '01');
 
   return (
     <article
@@ -26,26 +33,33 @@ export default function TemplateCard({ template }) {
     >
       {/* Preview area */}
       <Link to={template.demoPath} className="tcard__preview" aria-label={`Open ${template.name} live demo`}>
-        <div className="tcard__preview-bg">
-          <div className="tcard__preview-mockup">
-            <div className="tcard__mockup-bar">
-              <span /><span /><span />
-            </div>
-            <div className="tcard__mockup-content">
-              <div className="tcard__mockup-hero" />
-              <div className="tcard__mockup-lines">
+        {template.thumbnail ? (
+          <div className="tcard__thumbnail-wrapper">
+            <img src={template.thumbnail} alt={template.name} className="tcard__thumbnail-img" loading="lazy" />
+            <div className="tcard__thumbnail-badge">Plotted Development</div>
+          </div>
+        ) : (
+          <div className="tcard__preview-bg">
+            <div className="tcard__preview-mockup">
+              <div className="tcard__mockup-bar">
                 <span /><span /><span />
               </div>
-              <div className="tcard__mockup-grid">
-                <span /><span /><span />
+              <div className="tcard__mockup-content">
+                <div className="tcard__mockup-hero" />
+                <div className="tcard__mockup-lines">
+                  <span /><span /><span />
+                </div>
+                <div className="tcard__mockup-grid">
+                  <span /><span /><span />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
         <div className="tcard__preview-overlay">
           <span className="tcard__preview-cta">Open Live Demo →</span>
         </div>
-        <div className="tcard__num">#{template.templateNumber}</div>
+        <div className="tcard__num">#{displayNum}</div>
       </Link>
 
       {/* Card body */}

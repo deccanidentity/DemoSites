@@ -23,7 +23,7 @@ export default function TemplateDetail() {
   const pkg = packages.find(p => p.id === template.packageId) || packages[0];
   const waMsgRaw = `Hi! I'm interested in the ${template.name} template (${template.tagline}). Please share more details.`;
   const waMsg = encodeURIComponent(waMsgRaw);
-  const waUrl = `https://wa.me/${siteConfig.whatsapp.replace(/\D/g,'')}?text=${waMsg}`;
+  const waUrl = `https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}?text=${waMsg}`;
 
   return (
     <main className="page-content">
@@ -80,20 +80,26 @@ export default function TemplateDetail() {
                   {theme === 'dark' ? '☀️' : '🌙'}
                 </button>
               </div>
-              <div className="td-preview__body">
-                <div className="td-preview__hero" />
-                <div className="td-preview__content">
-                  <div className="td-preview__line td-preview__line--wide" />
-                  <div className="td-preview__line td-preview__line--med" />
-                  <div className="td-preview__cards">
-                    <span /><span /><span />
-                  </div>
-                </div>
+              <div className="td-preview__body" style={template.thumbnail ? { padding: 0, overflow: 'hidden' } : {}}>
+                {template.thumbnail ? (
+                  <img src={template.thumbnail} alt={template.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <>
+                    <div className="td-preview__hero" />
+                    <div className="td-preview__content">
+                      <div className="td-preview__line td-preview__line--wide" />
+                      <div className="td-preview__line td-preview__line--med" />
+                      <div className="td-preview__cards">
+                        <span /><span /><span />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
             <Link to={template.demoPath} className="td-preview__overlay" aria-label={`Open ${template.name} live demo`}>
               <div className="td-preview__play">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
                 Open Live Demo
               </div>
             </Link>

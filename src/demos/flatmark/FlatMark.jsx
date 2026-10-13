@@ -1,31 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import siteConfig from '../../data/site.config.js';
 import DemoBar from '../../components/DemoBar.jsx';
 import '../plotmark/PlotMark.css';
 import './FlatMark.css';
-
-const TOWERS = [
-  { id: 'A', name: 'Tower A', floors: 10, units: ['2BHK','3BHK'] },
-  { id: 'B', name: 'Tower B', floors: 12, units: ['2BHK','3BHK','4BHK'] },
-  { id: 'C', name: 'Tower C', floors: 8,  units: ['2BHK'] },
-];
-
-const STATUS = ['available','available','booked','available','sold','available','booked','available'];
-
-function genFlats(tower, floor) {
-  const count = tower.id === 'B' ? 4 : 3;
-  return Array.from({ length: count }, (_, i) => ({
-    id: `${tower.id}${floor}0${i + 1}`,
-    label: `${tower.id}-${floor}0${i + 1}`,
-    bhk: tower.units[i % tower.units.length],
-    area: tower.units[i % tower.units.length] === '2BHK' ? '1100 Sq.Ft' : tower.units[i % tower.units.length] === '3BHK' ? '1550 Sq.Ft' : '2000 Sq.Ft',
-    price: tower.units[i % tower.units.length] === '2BHK' ? '₹65 Lakhs' : tower.units[i % tower.units.length] === '3BHK' ? '₹92 Lakhs' : '₹1.25 Cr',
-    status: STATUS[(floor + i) % STATUS.length],
-  }));
-}
-
-const STATUS_COLOR = { available: '#16a34a', booked: '#ca8a04', sold: '#dc2626' };
+import {
+  PROJECT_INFO,
+  TOWERS,
+  FLOOR_PLANS,
+  AMENITIES,
+  GALLERY_ITEMS,
+} from './flatMarkData.js';
 
 export default function FlatMarkDemo() {
   const [activePage, setActivePage] = useState(() => {
@@ -35,165 +20,1318 @@ export default function FlatMarkDemo() {
     }
     return 'home';
   });
-  const [tower, setTower] = useState(TOWERS[0]);
-  const [floor, setFloor] = useState(3);
-  const [selectedFlat, setSelectedFlat] = useState(null);
-  const [done, setDone] = useState(false);
 
-  const flats = useMemo(() => genFlats(tower, floor), [tower, floor]);
+  // Selected tower for filtering floor plans or viewing tower details
+  const [selectedTower, setSelectedTower] = useState(TOWERS[0]);
+
+  // Floor plan tab
+  const [activePlanId, setActivePlanId] = useState('2bhk');
+
+  // Gallery filter
+  const [galleryFilter, setGalleryFilter] = useState('all');
+  const [lightboxData, setLightboxData] = useState(null);
+
+  // Modals
+  const [showBrochureModal, setShowBrochureModal] = useState(false);
+  const [brochureForm, setBrochureForm] = useState({ name: '', phone: '' });
+  const [brochureDone, setBrochureDone] = useState(false);
+
+  // Contact / Visit form
+  const [visitForm, setVisitForm] = useState({
+    name: '',
+    phone: '',
+    tower: 'Tower A — The Azure',
+    bhk: '2 BHK',
+    date: '',
+    timeSlot: 'Morning (10:00 AM - 1:00 PM)',
+    notes: '',
+  });
+  const [visitLoading, setVisitLoading] = useState(false);
+  const [visitDone, setVisitDone] = useState(false);
+
+  // WhatsApp Link Helper
+  const getWhatsAppUrl = (customText) => {
+    const phone = siteConfig.whatsapp.replace(/\D/g, '');
+    const defaultMsg = `Hi FlatMark team, I am interested in FlatMark Skyline Residences. Please share the pricing, tower brochures, and floor plans.`;
+    return `https://wa.me/${phone}?text=${encodeURIComponent(customText || defaultMsg)}`;
+  };
+
+  // Active Floor Plan object
+  const activePlan = useMemo(() => {
+    return FLOOR_PLANS.find(p => p.id === activePlanId) || FLOOR_PLANS[0];
+  }, [activePlanId]);
+
+  // Gallery filtered items
+  const filteredGallery = useMemo(() => {
+    if (galleryFilter === 'all') return GALLERY_ITEMS;
+    return GALLERY_ITEMS.filter(item => item.category === galleryFilter);
+  }, [galleryFilter]);
+
+  // Handle Brochure download
+  const handleBrochureDownload = (e) => {
+    e.preventDefault();
+    if (!brochureForm.name || brochureForm.phone.length < 10) return;
+
+    const content = `=====================================================================
+${PROJECT_INFO.name.toUpperCase()} — OFFICIAL RESIDENTIAL BROCHURE
+=====================================================================
+Tagline: ${PROJECT_INFO.tagline}
+RERA Registration: ${PROJECT_INFO.rera}
+Location: ${PROJECT_INFO.location}
+Possession Target: ${PROJECT_INFO.possession}
+
+TOWERS OVERVIEW:
+- Tower A (The Azure): 10 Floors (2 BHK & 3 BHK)
+- Tower B (The Apex): 12 Floors (2 BHK, 3 BHK & 4 BHK Sky Penthouses)
+- Tower C (The Aria): 8 Floors (2 BHK Boutique Residences)
+
+KEY CONFIGURATIONS & PRICING:
+- 2 BHK Smart Luxury: 1,150 Sq.Ft | Carpet: 860 Sq.Ft | Starting ₹65.5 Lakhs*
+- 3 BHK Royal Residence: 1,680 Sq.Ft | Carpet: 1,260 Sq.Ft | Starting ₹95.8 Lakhs*
+- 4 BHK Sky Penthouse: 2,450 Sq.Ft | Carpet: 1,890 Sq.Ft | Starting ₹1.48 Cr*
+
+CLUBHOUSE & RECREATIONAL AMENITIES:
+- Half-Olympic Temperature Controlled Swimming Pool
+- 25,000 Sq.Ft Grand Recreational Clubhouse
+- Technogym Certified Fitness Studio & Aerobics Room
+- 78% Landscaped Vehicular-Free Podium Deck
+- 3-Level Basement Parking with EV Charging Conduits
+- 3-Tier Security with RFID Access & 24/7 CCTV
+
+SALES & SITE OFFICE:
+Phone: ${siteConfig.phone}
+WhatsApp: ${siteConfig.whatsapp}
+Website: https://deccanidentity.com/demo/flatmark
+=====================================================================`;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `FlatMark-Skyline-Residences-Brochure.txt`;
+    link.click();
+
+    setBrochureDone(true);
+  };
+
+  // Handle Visit form submission
+  const handleVisitSubmit = (e) => {
+    e.preventDefault();
+    if (!visitForm.name || visitForm.phone.length < 10) return;
+    setVisitLoading(true);
+    setTimeout(() => {
+      setVisitLoading(false);
+      setVisitDone(true);
+    }, 700);
+  };
+
+  // Scroll to section helper
+  const scrollToSection = (id) => {
+    if (activePage !== 'home') {
+      setActivePage('home');
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    } else {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
-    <div className="pm-demo">
-      <DemoBar templateSlug="flatmark" templateName="FlatMark" label="🏢 FlatMark — Premium Apartment Demo" />
-      <nav className="pm-nav" aria-label="FlatMark navigation">
-        <div className="pm-nav__logo" style={{ color: '#2563EB' }}>FlatMark</div>
-        <ul className="pm-nav__links">
-          {['home','apartments','amenities','gallery','contact'].map(p => (
-            <li key={p}><button className={activePage === p ? 'active' : ''} onClick={() => setActivePage(p)} style={activePage === p ? { color: '#2563EB', background: 'rgba(37,99,235,0.1)' } : {}}>{p.charAt(0).toUpperCase() + p.slice(1)}</button></li>
-          ))}
+    <div className="pm-demo fm-theme">
+      <DemoBar
+        templateSlug="flatmark"
+        templateName="FlatMark"
+        label="🏢 FlatMark — Premium Apartment Demo"
+      />
+
+      {/* ── Navigation ──────────────────────────────────────────────────────── */}
+      <nav className="pm-nav fm-nav" aria-label="FlatMark navigation">
+        <div
+          className="pm-nav__logo fm-nav__logo"
+          onClick={() => { setActivePage('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          role="button"
+          tabIndex={0}
+        >
+          <span className="fm-nav__logo-icon">🏢</span>
+          <div className="fm-nav__logo-text">
+            <span className="fm-nav__logo-title">
+              Flat<span>Mark</span>
+            </span>
+            <span className="fm-nav__logo-sub">
+              Skyline Residences
+            </span>
+          </div>
+        </div>
+
+        <ul className="pm-nav__links fm-nav__links">
+          {[
+            { id: 'home', label: 'Home' },
+            { id: 'about', label: 'About' },
+            { id: 'towers', label: 'Towers' },
+            { id: 'floorplans', label: 'Floor Plans' },
+            { id: 'amenities', label: 'Amenities' },
+            { id: 'gallery', label: 'Gallery' },
+            { id: 'location', label: 'Location' },
+            { id: 'contact', label: 'Contact' },
+          ].map(p => {
+            const isActive = activePage === p.id;
+            return (
+              <li key={p.id}>
+                <button
+                  className={`fm-nav__btn ${isActive ? 'fm-nav__btn--active' : ''}`}
+                  onClick={() => {
+                    setActivePage(p.id);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  {p.label}
+                </button>
+              </li>
+            );
+          })}
         </ul>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button className="btn btn-sm" style={{ background: '#2563EB', color: '#fff', borderRadius: 'var(--radius-pill)', padding: '7px 16px', fontWeight: 600 }} onClick={() => setActivePage('contact')}>Book Visit</button>
+
+        <div className="fm-nav__actions">
+          <button
+            className="fm-nav__brochure-btn"
+            onClick={() => setShowBrochureModal(true)}
+          >
+            📥 Brochure
+          </button>
+          <button
+            className="fm-btn-free-visit"
+            onClick={() => {
+              setActivePage('contact');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            title="Book a Complimentary Site Visit with Pickup"
+          >
+            <span className="fm-btn-free-visit__icon">🚗</span>
+            <span>Free Site Visit</span>
+            <span className="fm-btn-free-visit__tag">FREE</span>
+          </button>
         </div>
       </nav>
 
+      {/* ── Main Router ─────────────────────────────────────────────────────── */}
       <main className="pm-main">
+        {/* 1. HOME VIEW */}
         {activePage === 'home' && (
           <div>
+            {/* Enhanced Hero Section with photorealistic apartment photography */}
             <section className="fm-hero">
+              <div className="fm-hero__overlay" />
               <div className="container fm-hero__content">
-                <div className="badge fm-badge">🏢 Premium Apartments · 3 Towers</div>
+                <div className="badge fm-badge">
+                  🏢 6.5-Acre Gated Community · Hyderabad Financial District
+                </div>
                 <h1 className="fm-hero__title">
-                  Elevated Living.<br /><span style={{ background: 'linear-gradient(135deg, #2563EB, #60A5FA)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>Above the Ordinary.</span>
+                  Elevated Living.<br />
+                  <span className="gradient-text">Above the Ordinary.</span>
                 </h1>
-                <p className="fm-hero__sub">2 & 3 BHK luxury apartments across 3 towers. Starting ₹65 Lakhs. RERA registered.</p>
-                <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-                  <button className="btn btn-lg" style={{ background: '#2563EB', color: '#fff', borderRadius: 'var(--radius-pill)', padding: '14px 28px', fontWeight: 700 }} onClick={() => setActivePage('apartments')}>View Availability</button>
-                  <button className="btn btn-outline btn-lg">Download Brochure</button>
+                <p className="fm-hero__sub">
+                  2, 3 &amp; 4 BHK contemporary luxury residences across 3 iconic high-rise towers with panoramic balconies, an elevated resort podium, and a 25,000 sq.ft grand clubhouse. Starting ₹65 Lakhs*.
+                </p>
+
+                <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button
+                    className="btn btn-lg"
+                    style={{ background: '#2563EB', color: '#fff', borderRadius: 'var(--radius-pill)', padding: '14px 28px', fontWeight: 700 }}
+                    onClick={() => {
+                      setActivePage('floorplans');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    Explore Floor Plans →
+                  </button>
+                  <button
+                    className="fm-btn-free-visit fm-btn-free-visit--lg"
+                    onClick={() => {
+                      setActivePage('contact');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    <span className="fm-btn-free-visit__icon">🚗</span>
+                    <span>Book Free Site Visit</span>
+                    <span className="fm-btn-free-visit__tag">FREE</span>
+                  </button>
+                  <button
+                    className="btn btn-outline btn-lg"
+                    style={{ borderColor: 'rgba(37,99,235,0.4)', color: 'var(--text-primary)' }}
+                    onClick={() => setShowBrochureModal(true)}
+                  >
+                    📥 Download Brochure
+                  </button>
+                  <a
+                    href={getWhatsAppUrl()}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-ghost btn-lg"
+                    style={{ border: '1px solid rgba(37,99,235,0.3)', color: '#2563EB' }}
+                  >
+                    💬 WhatsApp Enquiry
+                  </a>
+                </div>
+
+                {/* Key Metrics Row */}
+                <div className="fm-hero-stats-row">
+                  <div className="fm-hero-stat-card">
+                    <span className="fm-hero-stat-val">3 Towers</span>
+                    <span className="fm-hero-stat-lbl">G+12 High-Rise</span>
+                  </div>
+                  <div className="fm-hero-stat-card">
+                    <span className="fm-hero-stat-val">78%</span>
+                    <span className="fm-hero-stat-lbl">Open Podium Deck</span>
+                  </div>
+                  <div className="fm-hero-stat-card">
+                    <span className="fm-hero-stat-val">25,000 SFT</span>
+                    <span className="fm-hero-stat-lbl">Grand Clubhouse</span>
+                  </div>
+                  <div className="fm-hero-stat-card">
+                    <span className="fm-hero-stat-val">₹65 L*</span>
+                    <span className="fm-hero-stat-lbl">Starting Price</span>
+                  </div>
                 </div>
               </div>
             </section>
-            <section className="pm-section container">
-              <h2 className="pm-section__title">Choose Your Tower</h2>
-              <div className="pm-grid-3">
+
+            {/* Choose Your Tower Section */}
+            <section className="pm-section container" id="towers">
+              <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 2.5rem' }}>
+                <span className="fm-badge" style={{ marginBottom: '0.75rem' }}>
+                  Architectural Masterpieces
+                </span>
+                <h2 className="pm-section__title" style={{ margin: '0 0 0.75rem' }}>
+                  Choose Your Tower
+                </h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                  Three distinctly engineered residential towers, oriented for maximum cross-ventilation, abundant sunlight, and unobstructed skyline vistas.
+                </p>
+              </div>
+
+              <div className="fm-tower-grid">
                 {TOWERS.map(t => (
-                  <div key={t.id} className="pm-highlight-card" style={{ cursor: 'pointer', borderColor: tower.id === t.id ? '#2563EB' : undefined }} onClick={() => { setTower(t); setActivePage('apartments'); }}>
-                    <div style={{ fontSize: '2rem', marginBottom: 'var(--space-3)' }}>🏢</div>
-                    <h3>{t.name}</h3>
-                    <p>{t.floors} Floors · {t.units.join(', ')}</p>
+                  <div
+                    key={t.id}
+                    className={`fm-tower-card ${selectedTower.id === t.id ? 'fm-tower-card--active' : ''}`}
+                    onClick={() => {
+                      setSelectedTower(t);
+                      setActivePage('floorplans');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    <div className="fm-tower-card__media">
+                      <img src={t.image} alt={t.name} className="fm-tower-card__img" loading="lazy" />
+                      <div className="fm-tower-card__badge-top">{t.badge}</div>
+                      <div className="fm-tower-card__status-pill">● {t.status}</div>
+                    </div>
+                    <div className="fm-tower-card__body">
+                      <h3 className="fm-tower-card__title">{t.name}</h3>
+                      <p className="fm-tower-card__desc">{t.description}</p>
+
+                      <div className="fm-tower-card__configs">
+                        {t.units.map(u => (
+                          <span key={u} className="fm-tower-card__config-pill">{u}</span>
+                        ))}
+                      </div>
+
+                      <ul className="fm-tower-card__highlights">
+                        {t.highlights.map((h, i) => (
+                          <li key={i} className="fm-tower-card__highlight-item">
+                            <span style={{ color: '#2563EB', fontWeight: 700 }}>✓</span> {h}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="fm-tower-card__footer">
+                        <div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Starting from</div>
+                          <strong style={{ color: '#2563EB', fontSize: '1.1rem' }}>{t.startingPrice}</strong>
+                        </div>
+                        <button
+                          className="btn btn-sm"
+                          style={{
+                            background: selectedTower.id === t.id ? '#2563EB' : 'rgba(37,99,235,0.1)',
+                            color: selectedTower.id === t.id ? '#ffffff' : '#2563EB',
+                            borderRadius: 'var(--radius-pill)',
+                            fontWeight: 700,
+                          }}
+                        >
+                          View Floor Plans →
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            {/* Quick Interactive Floor Plan Preview */}
+            <section className="pm-section container" style={{ paddingTop: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div>
+                  <span className="fm-badge" style={{ marginBottom: '0.5rem' }}>
+                    Spacious Blueprints
+                  </span>
+                  <h2 className="pm-section__title" style={{ margin: '0 0 0.25rem' }}>
+                    Floor Plans at a Glance
+                  </h2>
+                  <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.95rem' }}>
+                    Select an apartment configuration below to preview ground and upper-level layouts.
+                  </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {FLOOR_PLANS.map(p => (
+                    <button
+                      key={p.id}
+                      className={`chip ${activePlanId === p.id ? 'active' : ''}`}
+                      onClick={() => setActivePlanId(p.id)}
+                    >
+                      {p.bhk}
+                    </button>
+                  ))}
+                  <button
+                    className="btn btn-outline btn-sm"
+                    style={{ borderColor: 'rgba(37,99,235,0.4)', color: '#2563EB' }}
+                    onClick={() => {
+                      setActivePage('floorplans');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    View All Blueprints →
+                  </button>
+                </div>
+              </div>
+
+              {/* Split Floor Plan Card */}
+              <div className="fm-plan-split">
+                <div
+                  className="fm-plan-stage"
+                  onClick={() => setLightboxData({ src: activePlan.image, title: `${activePlan.name} (${activePlan.sft})` })}
+                >
+                  <img src={activePlan.image} alt={activePlan.name} className="fm-plan-img" />
+                  <div className="fm-plan-zoom-badge">
+                    🔍 Click to Enlarge Blueprint
+                  </div>
+                </div>
+
+                <div className="fm-plan-info">
+                  <span className="fm-badge" style={{ alignSelf: 'flex-start', marginBottom: '0.75rem' }}>
+                    {activePlan.tag}
+                  </span>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 0.5rem' }}>
+                    {activePlan.name}
+                  </h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', margin: '0 0 1rem' }}>
+                    {activePlan.description}
+                  </p>
+
+                  <table className="fm-plan-specs-table">
+                    <tbody>
+                      <tr>
+                        <td>Super Built-Up Area</td>
+                        <td>{activePlan.sft}</td>
+                      </tr>
+                      <tr>
+                        <td>Carpet Area (RERA)</td>
+                        <td>{activePlan.carpet}</td>
+                      </tr>
+                      <tr>
+                        <td>Bedrooms / Bathrooms</td>
+                        <td>{activePlan.bed} Beds · {activePlan.bath} Baths</td>
+                      </tr>
+                      <tr>
+                        <td>Balconies</td>
+                        <td>{activePlan.balcony} Panoramic Balconies</td>
+                      </tr>
+                      <tr>
+                        <td>Indicative Price</td>
+                        <td style={{ color: '#2563EB' }}>{activePlan.price}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '1rem' }}>
+                    <a
+                      href={getWhatsAppUrl(`Hi, I'm interested in the ${activePlan.name} (${activePlan.sft}, ${activePlan.price}). Please share the cost sheet.`)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-primary"
+                      style={{ background: '#2563EB', borderColor: '#2563EB', borderRadius: 'var(--radius-pill)', padding: '10px 22px' }}
+                    >
+                      💬 Enquire for Cost Sheet
+                    </a>
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => setShowBrochureModal(true)}
+                    >
+                      📥 Download Plan PDF
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* VIP Site Visit Booking Banner */}
+            <section className="pm-section container">
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)',
+                  borderRadius: '20px',
+                  padding: '3rem',
+                  color: '#ffffff',
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(0, 1.2fr) minmax(0, 0.8fr)',
+                  gap: '2.5rem',
+                  alignItems: 'center',
+                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.25)',
+                }}
+              >
+                <div>
+                  <span className="fm-badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#93c5fd', borderColor: 'rgba(255,255,255,0.25)', marginBottom: '0.75rem' }}>
+                    ⭐ Exclusive Experience
+                  </span>
+                  <h2 style={{ fontSize: '2rem', fontWeight: 800, margin: '0 0 0.75rem', color: '#ffffff' }}>
+                    Experience the Finished Sample Flat
+                  </h2>
+                  <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem', lineHeight: '1.7', margin: '0 0 1.5rem' }}>
+                    Walk through our fully furnished 3 BHK show home and experience the 11-foot ceiling clearances, soundproof German UPVC sliding balconies, and central podium landscape.
+                  </p>
+                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <button
+                      className="fm-btn-free-visit fm-btn-free-visit--lg"
+                      onClick={() => {
+                        setActivePage('contact');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    >
+                      <span className="fm-btn-free-visit__icon">🚗</span>
+                      <span>Schedule Free Site Visit Tour →</span>
+                      <span className="fm-btn-free-visit__tag">FREE</span>
+                    </button>
+                    <a
+                      href={getWhatsAppUrl('Hi, I would like to schedule a private visit to the FlatMark sample flat this weekend.')}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-outline btn-lg"
+                      style={{ borderColor: 'rgba(255,255,255,0.4)', color: '#ffffff' }}
+                    >
+                      💬 Quick WhatsApp Booking
+                    </a>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    borderRadius: '16px',
+                    padding: '2rem',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    backdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 1rem', color: '#ffffff' }}>
+                    Site Visit Privileges
+                  </h3>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem', color: 'rgba(255,255,255,0.9)' }}>
+                    <li>✓ Dedicated Senior Relationship Manager</li>
+                    <li>✓ Detailed Printed Cost &amp; Payment Schedule</li>
+                    <li>✓ Instant Loan Pre-Approval Assistance (SBI / HDFC)</li>
+                    <li>✓ Complimentary Pickup &amp; Drop (Selected Hubs)</li>
+                  </ul>
+                  <div style={{ fontSize: '0.8rem', color: '#93c5fd' }}>
+                    📍 Site Open 9:00 AM – 7:00 PM (All 7 Days)
+                  </div>
+                </div>
               </div>
             </section>
           </div>
         )}
 
-        {activePage === 'apartments' && (
+        {/* 2. TOWERS PAGE */}
+        {activePage === 'towers' && (
           <section className="pm-section container">
-            <h2 className="pm-section__title">Apartment Availability</h2>
-            {/* Tower selector */}
-            <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-5)', flexWrap: 'wrap' }}>
+            <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 2.5rem' }}>
+              <span className="fm-badge" style={{ marginBottom: '0.75rem' }}>
+                Residential Towers
+              </span>
+              <h2 className="pm-section__title" style={{ margin: '0 0 0.75rem' }}>
+                Three Iconic High-Rise Towers
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                Explore tower-specific floor counts, unit configurations, and architectural elevations. Select any tower to view real-time flat availability.
+              </p>
+            </div>
+
+            <div className="fm-tower-grid">
               {TOWERS.map(t => (
-                <button key={t.id} className={`chip ${tower.id === t.id ? 'active' : ''}`} onClick={() => { setTower(t); setFloor(3); }} style={tower.id === t.id ? { background: '#2563EB', borderColor: '#2563EB' } : {}}>{t.name}</button>
-              ))}
-            </div>
-            {/* Floor selector */}
-            <div style={{ marginBottom: 'var(--space-6)' }}>
-              <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: 'var(--space-2)' }}>Floor</div>
-              <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-                {Array.from({ length: tower.floors }, (_, i) => i + 1).map(f => (
-                  <button key={f} className={`chip chip-sm ${floor === f ? 'active' : ''}`} onClick={() => setFloor(f)} style={floor === f ? { background: '#2563EB', borderColor: '#2563EB' } : {}}>{f}</button>
-                ))}
-              </div>
-            </div>
-            {/* Flat cards */}
-            <h3 style={{ fontSize: '1rem', color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>{tower.name} · Floor {floor}</h3>
-            <div className="pm-grid-3">
-              {flats.map(flat => (
-                <div key={flat.id} className="pm-highlight-card" style={{ cursor: 'pointer', borderColor: flat.status === 'available' ? STATUS_COLOR.available + '44' : flat.status === 'booked' ? STATUS_COLOR.booked + '44' : STATUS_COLOR.sold + '44' }} onClick={() => setSelectedFlat(flat)}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{flat.label}</span>
-                    <span style={{ fontSize: '0.6875rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: STATUS_COLOR[flat.status], background: STATUS_COLOR[flat.status] + '22', padding: '2px 8px', borderRadius: 'var(--radius-pill)' }}>{flat.status}</span>
+                <div
+                  key={t.id}
+                  className={`fm-tower-card ${selectedTower.id === t.id ? 'fm-tower-card--active' : ''}`}
+                  onClick={() => {
+                    setSelectedTower(t);
+                    setActivePage('floorplans');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <div className="fm-tower-card__media">
+                    <img src={t.image} alt={t.name} className="fm-tower-card__img" loading="lazy" />
+                    <div className="fm-tower-card__badge-top">{t.badge}</div>
+                    <div className="fm-tower-card__status-pill">● {t.status}</div>
                   </div>
-                  <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: 4 }}>{flat.bhk} · {flat.area}</div>
-                  <div style={{ fontWeight: 700, color: '#2563EB' }}>{flat.price}</div>
+                  <div className="fm-tower-card__body">
+                    <h3 className="fm-tower-card__title">{t.name}</h3>
+                    <p className="fm-tower-card__desc">{t.description}</p>
+
+                    <div className="fm-tower-card__configs">
+                      {t.units.map(u => (
+                        <span key={u} className="fm-tower-card__config-pill">{u}</span>
+                      ))}
+                    </div>
+
+                    <ul className="fm-tower-card__highlights">
+                      {t.highlights.map((h, i) => (
+                        <li key={i} className="fm-tower-card__highlight-item">
+                          <span style={{ color: '#2563EB', fontWeight: 700 }}>✓</span> {h}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="fm-tower-card__footer">
+                      <div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Starting from</div>
+                        <strong style={{ color: '#2563EB', fontSize: '1.1rem' }}>{t.startingPrice}</strong>
+                      </div>
+                      <button
+                        className="btn btn-sm"
+                        style={{
+                          background: selectedTower.id === t.id ? '#2563EB' : 'rgba(37,99,235,0.1)',
+                          color: selectedTower.id === t.id ? '#ffffff' : '#2563EB',
+                          borderRadius: 'var(--radius-pill)',
+                          fontWeight: 700,
+                        }}
+                      >
+                        View Floor Plans →
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
-            {selectedFlat && (
-              <div className="plot-modal-overlay" onClick={() => setSelectedFlat(null)}>
-                <div className="plot-modal" onClick={e => e.stopPropagation()}>
-                  <button className="plot-modal__close" onClick={() => setSelectedFlat(null)}>×</button>
-                  <div className="plot-modal__header">
-                    <h3>Flat {selectedFlat.label}</h3>
-                    <span className="plot-modal__status" style={{ color: STATUS_COLOR[selectedFlat.status], background: STATUS_COLOR[selectedFlat.status] + '22', border: `1px solid ${STATUS_COLOR[selectedFlat.status]}44` }}>{selectedFlat.status}</span>
-                  </div>
-                  <div className="plot-modal__details">
-                    <div className="plot-modal__detail"><span>Configuration</span><strong>{selectedFlat.bhk}</strong></div>
-                    <div className="plot-modal__detail"><span>Area</span><strong>{selectedFlat.area}</strong></div>
-                    <div className="plot-modal__detail"><span>Floor</span><strong>{floor}</strong></div>
-                    <div className="plot-modal__detail"><span>Price</span><strong>{selectedFlat.price}</strong></div>
-                  </div>
-                  <div className="plot-modal__actions">
-                    {selectedFlat.status === 'available' ? (
-                      <a href={`https://wa.me/${siteConfig.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(`Hi! I'm interested in Flat ${selectedFlat.label} (${selectedFlat.bhk}, ${selectedFlat.area}, ${selectedFlat.price}).`)}`} className="btn btn-whatsapp" style={{ flex: 1, justifyContent: 'center' }} target="_blank" rel="noreferrer">💬 Enquire</a>
-                    ) : (
-                      <button className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center', opacity: 0.5 }} disabled>{selectedFlat.status === 'booked' ? 'Booked' : 'Sold'}</button>
-                    )}
-                    <button className="btn btn-ghost" style={{ flex: 1, justifyContent: 'center' }} onClick={() => setSelectedFlat(null)}>Close</button>
-                  </div>
-                </div>
-              </div>
-            )}
           </section>
         )}
 
+        {/* 3. FLOOR PLANS PAGE */}
+        {activePage === 'floorplans' && (
+          <section className="pm-section container">
+            <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 2.5rem' }}>
+              <span className="fm-badge" style={{ marginBottom: '0.75rem' }}>
+                Architectural Blueprints
+              </span>
+              <h2 className="pm-section__title" style={{ margin: '0 0 0.75rem' }}>
+                Master-Crafted Floor Plans
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                Ergonomically engineered for optimal daylight, privacy, and zero wasted corridors. Switch configurations below to inspect dimensioned room layouts.
+              </p>
+            </div>
+
+            {/* Plan Switcher Chips */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '2.5rem', flexWrap: 'wrap' }}>
+              {FLOOR_PLANS.map(p => (
+                <button
+                  key={p.id}
+                  className={`chip ${activePlanId === p.id ? 'active' : ''}`}
+                  style={{ padding: '8px 20px', fontSize: '0.95rem', fontWeight: 700 }}
+                  onClick={() => setActivePlanId(p.id)}
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Detailed Floor Plan View */}
+            <div className="fm-plan-split">
+              <div
+                className="fm-plan-stage"
+                onClick={() => setLightboxData({ src: activePlan.image, title: `${activePlan.name} (${activePlan.sft})` })}
+              >
+                <img src={activePlan.image} alt={activePlan.name} className="fm-plan-img" />
+                <div className="fm-plan-zoom-badge">
+                  🔍 Click to Enlarge Blueprint
+                </div>
+              </div>
+
+              <div className="fm-plan-info">
+                <span className="fm-badge" style={{ alignSelf: 'flex-start', marginBottom: '0.75rem' }}>
+                  {activePlan.tag}
+                </span>
+                <h3 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 0.5rem' }}>
+                  {activePlan.name}
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', margin: '0 0 1.25rem' }}>
+                  {activePlan.description}
+                </p>
+
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.5rem', color: '#2563EB' }}>
+                  Room Dimensions &amp; Layout
+                </h4>
+                <table className="fm-plan-specs-table">
+                  <tbody>
+                    {activePlan.rooms.map((rm, idx) => (
+                      <tr key={idx}>
+                        <td>{rm.name}</td>
+                        <td>{rm.size}</td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <td>Super Built-Up Area</td>
+                      <td style={{ color: '#2563EB' }}>{activePlan.sft}</td>
+                    </tr>
+                    <tr>
+                      <td>Carpet Area (RERA)</td>
+                      <td>{activePlan.carpet}</td>
+                    </tr>
+                    <tr>
+                      <td>Starting Base Price</td>
+                      <td style={{ color: '#2563EB', fontWeight: 800 }}>{activePlan.price}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                    Key Architectural Features:
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {activePlan.features.map((f, i) => (
+                      <span key={i} style={{ fontSize: '0.75rem', background: 'rgba(37,99,235,0.08)', color: '#2563EB', border: '1px solid rgba(37,99,235,0.2)', padding: '3px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                        ✓ {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <a
+                    href={getWhatsAppUrl(`Hi, I'm interested in the ${activePlan.name} (${activePlan.sft}). Please share availability and payment plan.`)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-primary"
+                    style={{ background: '#2563EB', borderColor: '#2563EB', borderRadius: 'var(--radius-pill)', padding: '10px 22px', fontWeight: 700 }}
+                  >
+                    💬 Enquire for Floor Plan
+                  </a>
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => setShowBrochureModal(true)}
+                  >
+                    📥 Download Blueprint PDF
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* 5. AMENITIES PAGE */}
         {activePage === 'amenities' && (
           <section className="pm-section container">
-            <h2 className="pm-section__title">Amenities</h2>
-            <div className="pm-grid-3">
-              {['🏊 Rooftop Pool','🏋️ Gym','🧒 Kids Zone','🌳 Garden','🏸 Sport Court','⛪ Prayer Hall','🛡️ 24/7 Security','🚗 3-Level Parking','🏪 Supermarket'].map(a => <div key={a} className="pm-amenity">{a}</div>)}
+            <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 2.5rem' }}>
+              <span className="fm-badge" style={{ marginBottom: '0.75rem' }}>
+                Resort-Grade Living
+              </span>
+              <h2 className="pm-section__title" style={{ margin: '0 0 0.75rem' }}>
+                Clubhouse &amp; Podium Amenities
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                Over 25 curated lifestyle and wellness facilities spread across a 6.5-acre elevated vehicular-free podium and multi-level clubhouse.
+              </p>
+            </div>
+
+            <div className="fm-amenity-grid">
+              {AMENITIES.map((am, i) => (
+                <div key={i} className="fm-amenity-card">
+                  <div className="fm-amenity-icon">{am.icon}</div>
+                  <div className="fm-amenity-category">{am.category}</div>
+                  <h3 className="fm-amenity-title">{am.title}</h3>
+                  <p className="fm-amenity-desc">{am.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '3rem' }}>
+              <button
+                className="btn btn-primary btn-lg"
+                style={{ background: '#2563EB', color: '#fff', borderRadius: 'var(--radius-pill)', fontWeight: 700 }}
+                onClick={() => {
+                  setActivePage('contact');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                Schedule a Visit to the Clubhouse →
+              </button>
             </div>
           </section>
         )}
 
+        {/* 6. GALLERY PAGE */}
         {activePage === 'gallery' && (
           <section className="pm-section container">
-            <h2 className="pm-section__title">Gallery</h2>
-            <div className="pm-gallery">
-              {['Tower View','Lobby','Living Room','Kitchen','Rooftop Pool','Gym'].map((l,i) => <div key={l} className="pm-gallery__item" style={{ background: ['#00051a','#001040','#000d30','#00051a','#001040','#00051a'][i] }}><span>{l}</span></div>)}
+            <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 2.5rem' }}>
+              <span className="fm-badge" style={{ marginBottom: '0.75rem' }}>
+                Visual Experience
+              </span>
+              <h2 className="pm-section__title" style={{ margin: '0 0 0.75rem' }}>
+                Project Gallery &amp; Architecture
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                Real architectural photography of the podium elevations, double-height entrance lobbies, panoramic show flats, and recreational zones.
+              </p>
+            </div>
+
+            {/* Category Filter Chips */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '2rem', flexWrap: 'wrap' }}>
+              {[
+                { id: 'all', label: 'All Photos' },
+                { id: 'architecture', label: 'Architecture & Towers' },
+                { id: 'lobby', label: 'Grand Lobby' },
+                { id: 'interiors', label: 'Show Flat Interiors' },
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  className={`chip ${galleryFilter === cat.id ? 'active' : ''}`}
+                  onClick={() => setGalleryFilter(cat.id)}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="fm-gallery-grid">
+              {filteredGallery.map(item => (
+                <div
+                  key={item.id}
+                  className="fm-gallery-card"
+                  onClick={() => setLightboxData(item)}
+                >
+                  <img src={item.src} alt={item.title} className="fm-gallery-img" loading="lazy" />
+                  <div className="fm-gallery-overlay">
+                    <span className="fm-gallery-badge">{item.categoryLabel}</span>
+                    <h4 className="fm-gallery-title">{item.title}</h4>
+                    <span style={{ fontSize: '0.75rem', opacity: 0.85, marginTop: '4px' }}>🔍 Click to view full image</span>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}
 
-        {activePage === 'contact' && (
-          <div className="pm-section container" style={{ maxWidth: 520 }}>
-            <h2 className="pm-section__title">Book a Site Visit</h2>
-            {done ? (
-              <div className="contact-success">
-                <div className="contact-success__icon">✅</div><h3>Visit Confirmed!</h3>
-                <p>Our team will contact you within 2 hours.</p>
-                <button className="btn btn-primary" style={{ marginTop: 'var(--space-4)' }} onClick={() => setDone(false)}>Submit Another</button>
+        {/* ABOUT PAGE */}
+        {activePage === 'about' && (
+          <section className="pm-section container">
+            <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 2.5rem' }}>
+              <span className="fm-badge" style={{ marginBottom: '0.75rem' }}>
+                Engineering Excellence
+              </span>
+              <h2 className="pm-section__title" style={{ margin: '0 0 0.75rem' }}>
+                About FlatMark Skyline Residences
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                Conceived as a benchmark for contemporary vertical living, FlatMark combines architectural elegance, sustainable green construction, and expansive podium leisure across 6.5 prime acres.
+              </p>
+            </div>
+
+            {/* Split Story Card */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 0.9fr)', gap: '2.5rem', alignItems: 'center', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '20px', overflow: 'hidden', marginBottom: '3rem', boxShadow: '0 8px 30px rgba(0,0,0,0.05)' }}>
+              <div style={{ height: '100%', minHeight: '380px' }}>
+                <img src="/images/flatmark-lobby.jpg" alt="FlatMark Grand Lobby" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
               </div>
-            ) : (
-              <form onSubmit={e => { e.preventDefault(); setDone(true); }} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                <input className="input" placeholder="Your Name" required aria-label="Name" />
-                <input className="input" placeholder="Mobile / WhatsApp" type="tel" required aria-label="Mobile" />
-                <select className="input" aria-label="BHK preference"><option>2 BHK</option><option>3 BHK</option><option>4 BHK</option></select>
-                <input className="input" type="date" aria-label="Preferred date" />
-                <button type="submit" className="btn btn-lg" style={{ background: '#2563EB', color: '#fff', borderRadius: 'var(--radius-pill)', padding: '14px', fontWeight: 700, justifyContent: 'center' }}>Book Visit</button>
-              </form>
-            )}
-          </div>
+              <div style={{ padding: '2.5rem' }}>
+                <span className="fm-badge" style={{ marginBottom: '0.5rem' }}>
+                  Grand Architecture
+                </span>
+                <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 1rem' }}>
+                  Designed for Discerning Families
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.7', margin: '0 0 1.25rem' }}>
+                  FlatMark Skyline Residences offers a rare combination of high-density convenience and low-density tranquility. With over 78% open space dedicated to an elevated vehicular-free landscaped podium, children and senior citizens can move with complete safety and serenity.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+                  <div>
+                    <strong style={{ fontSize: '1.25rem', color: '#2563EB', display: 'block' }}>6.5 Acres</strong>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Gated Podium Campus</span>
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: '1.25rem', color: '#2563EB', display: 'block' }}>IGBC Gold</strong>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Green Building Certified</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 4 Pillars Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
+              <div className="fm-amenity-card">
+                <div style={{ fontSize: '2rem' }}>🏗️</div>
+                <h4 style={{ fontSize: '1.1rem', margin: '0.5rem 0', color: 'var(--text-primary)' }}>100% Shear Wall RCC</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>Monolithic aluminum formwork construction providing earthquake resistance, superior acoustic insulation, and seamless crack-free finishes.</p>
+              </div>
+              <div className="fm-amenity-card">
+                <div style={{ fontSize: '2rem' }}>🌿</div>
+                <h4 style={{ fontSize: '1.1rem', margin: '0.5rem 0', color: 'var(--text-primary)' }}>Vehicular-Free Podium</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>All vehicle movement and parking are directed to the 3-level basement, leaving the surface podium 100% pedestrian-safe with lush landscaped decks.</p>
+              </div>
+              <div className="fm-amenity-card">
+                <div style={{ fontSize: '2rem' }}>⚡</div>
+                <h4 style={{ fontSize: '1.1rem', margin: '0.5rem 0', color: 'var(--text-primary)' }}>100% Power &amp; Water</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>Full dual-feed DG power backup for entire residences (including ACs), centralized water treatment plant, and solar lighting for common areas.</p>
+              </div>
+              <div className="fm-amenity-card">
+                <div style={{ fontSize: '2rem' }}>📜</div>
+                <h4 style={{ fontSize: '1.1rem', margin: '0.5rem 0', color: 'var(--text-primary)' }}>Clear RERA Approvals</h4>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>Fully licensed under TG-RERA Registration No. P02400008432 with complete bank project approvals from SBI, HDFC, ICICI, and Axis Bank.</p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* LOCATION PAGE */}
+        {activePage === 'location' && (
+          <section className="pm-section container">
+            <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 2.5rem' }}>
+              <span className="fm-badge" style={{ marginBottom: '0.75rem' }}>
+                Strategic Connectivity
+              </span>
+              <h2 className="pm-section__title" style={{ margin: '0 0 0.75rem' }}>
+                Prime Financial District Growth Corridor
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                Immediate signal-free expressway access to Hyderabad's premier IT towers, multi-specialty healthcare networks, and international educational institutions.
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
+              {[
+                { place: 'Financial District & Wipro Circle', dist: '3.5 Km', time: '8 Mins', tag: 'IT & Global Tech' },
+                { place: 'Continental & Care Hospitals', dist: '2.8 Km', time: '6 Mins', tag: 'Healthcare Hub' },
+                { place: 'Oakridge & Delhi Public School', dist: '4.2 Km', time: '10 Mins', tag: 'Top International Schools' },
+                { place: 'Inorbit Mall & Nexus Mall', dist: '8.0 Km', time: '15 Mins', tag: 'Retail & Dining' },
+                { place: 'Rajiv Gandhi Int’l Airport', dist: '28 Km', time: '25 Mins', tag: 'Signal-Free via ORR' },
+              ].map((loc, idx) => (
+                <div key={idx} className="fm-amenity-card" style={{ padding: '1.5rem' }}>
+                  <span style={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    {loc.tag}
+                  </span>
+                  <h4 style={{ margin: '0.25rem 0', fontSize: '1.05rem', color: 'var(--text-primary)' }}>
+                    {loc.place}
+                  </h4>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 'auto', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📍 {loc.dist}</span>
+                    <strong style={{ fontSize: '1.2rem', color: '#2563EB' }}>⚡ {loc.time}</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <button
+                className="btn btn-primary"
+                style={{ background: '#2563EB', borderColor: '#2563EB', borderRadius: 'var(--radius-pill)', padding: '12px 28px', fontWeight: 700 }}
+                onClick={() => {
+                  setActivePage('contact');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                Schedule Site Visit &amp; Route Guidance →
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* 7. CONTACT / SITE VISIT PAGE */}
+        {activePage === 'contact' && (
+          <section className="pm-section container" style={{ maxWidth: 720 }}>
+            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+              <span className="fm-badge" style={{ marginBottom: '0.75rem' }}>
+                Book Your Preview
+              </span>
+              <h2 className="pm-section__title" style={{ margin: '0 0 0.5rem' }}>
+                Schedule a VIP Site Visit
+              </h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+                Tour our completed show flat, walk through the 25,000 sq.ft clubhouse, and receive customized payment plans from our senior relationship team.
+              </p>
+            </div>
+
+            <div
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: '20px',
+                padding: '2.5rem',
+                boxShadow: '0 12px 36px rgba(0, 0, 0, 0.06)',
+              }}
+            >
+              {visitDone ? (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                  <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>✅</div>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0 0 0.5rem', color: '#2563EB' }}>
+                    Site Visit Confirmed!
+                  </h3>
+                  <p style={{ color: 'var(--text-secondary)', maxWidth: 460, margin: '0 auto 1.5rem', lineHeight: 1.6 }}>
+                    Thank you, <strong>{visitForm.name}</strong>. Your private tour for <strong>{visitForm.tower} ({visitForm.bhk})</strong> has been scheduled. Our relationship manager will call you within 2 hours to confirm pickup or directions.
+                  </p>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                    <a
+                      href={getWhatsAppUrl(`Hi, I just submitted a site visit request for ${visitForm.name} (${visitForm.phone}).`)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-whatsapp"
+                    >
+                      💬 WhatsApp Confirmation
+                    </a>
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => {
+                        setVisitDone(false);
+                        setVisitForm({
+                          name: '',
+                          phone: '',
+                          tower: 'Tower A — The Azure',
+                          bhk: '2 BHK',
+                          date: '',
+                          timeSlot: 'Morning (10:00 AM - 1:00 PM)',
+                          notes: '',
+                        });
+                      }}
+                    >
+                      Book Another Visit
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleVisitSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                        Your Full Name *
+                      </label>
+                      <input
+                        className="input"
+                        placeholder="e.g. Rajesh Kumar"
+                        required
+                        value={visitForm.name}
+                        onChange={e => setVisitForm({ ...visitForm, name: e.target.value })}
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                        Mobile / WhatsApp *
+                      </label>
+                      <input
+                        className="input"
+                        placeholder="10-digit mobile"
+                        type="tel"
+                        required
+                        pattern="[0-9]{10}"
+                        title="Please enter a valid 10-digit mobile number"
+                        value={visitForm.phone}
+                        onChange={e => setVisitForm({ ...visitForm, phone: e.target.value })}
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                        Preferred Tower
+                      </label>
+                      <select
+                        className="input"
+                        value={visitForm.tower}
+                        onChange={e => setVisitForm({ ...visitForm, tower: e.target.value })}
+                        style={{ width: '100%' }}
+                      >
+                        {TOWERS.map(t => (
+                          <option key={t.id} value={t.name}>{t.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                        BHK Configuration
+                      </label>
+                      <select
+                        className="input"
+                        value={visitForm.bhk}
+                        onChange={e => setVisitForm({ ...visitForm, bhk: e.target.value })}
+                        style={{ width: '100%' }}
+                      >
+                        <option value="2 BHK">2 BHK (1,150 Sq.Ft)</option>
+                        <option value="3 BHK">3 BHK (1,680 Sq.Ft)</option>
+                        <option value="4 BHK">4 BHK Penthouse (2,450 Sq.Ft)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                        Preferred Date
+                      </label>
+                      <input
+                        className="input"
+                        type="date"
+                        value={visitForm.date}
+                        onChange={e => setVisitForm({ ...visitForm, date: e.target.value })}
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                        Preferred Time Slot
+                      </label>
+                      <select
+                        className="input"
+                        value={visitForm.timeSlot}
+                        onChange={e => setVisitForm({ ...visitForm, timeSlot: e.target.value })}
+                        style={{ width: '100%' }}
+                      >
+                        <option>Morning (10:00 AM - 1:00 PM)</option>
+                        <option>Afternoon (1:00 PM - 4:00 PM)</option>
+                        <option>Evening (4:00 PM - 7:00 PM)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '6px', display: 'block' }}>
+                      Special Requirements or Queries
+                    </label>
+                    <textarea
+                      className="input"
+                      rows={3}
+                      placeholder="e.g. Interested in high floor facing pool, need home loan details..."
+                      value={visitForm.notes}
+                      onChange={e => setVisitForm({ ...visitForm, notes: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-lg"
+                    disabled={visitLoading}
+                    style={{
+                      background: '#2563EB',
+                      color: '#ffffff',
+                      borderRadius: 'var(--radius-pill)',
+                      padding: '14px',
+                      fontWeight: 700,
+                      justifyContent: 'center',
+                      marginTop: '0.5rem',
+                    }}
+                  >
+                    {visitLoading ? 'Confirming Site Visit...' : 'Confirm Site Visit Schedule →'}
+                  </button>
+                </form>
+              )}
+            </div>
+          </section>
         )}
       </main>
 
-      <footer className="pm-footer">
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
-          <div><div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: '#2563EB', marginBottom: 4 }}>FlatMark</div><div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>Premium Apartments · 3 Towers</div></div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Demo by <Link to="/" style={{ color: 'var(--brand-gold)' }}>DeccanIDentity</Link></div>
+
+
+      {/* ── Brochure Modal ──────────────────────────────────────────────────── */}
+      {showBrochureModal && (
+        <div className="plot-modal-overlay" onClick={() => setShowBrochureModal(false)} role="dialog" aria-modal="true">
+          <div className="plot-modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <button className="plot-modal__close" onClick={() => setShowBrochureModal(false)}>×</button>
+            <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+              <span style={{ fontSize: '2.5rem' }}>📥</span>
+              <h3 style={{ margin: '0.5rem 0 0.25rem' }}>Download Project Brochure</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                Complete tower layouts, floor plans, specifications, and club amenities catalog.
+              </p>
+            </div>
+
+            {brochureDone ? (
+              <div style={{ textAlign: 'center', padding: '1rem 0' }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>✅</div>
+                <h4 style={{ margin: '0 0 0.5rem', color: '#2563EB' }}>Download Initiated!</h4>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                  The official specification brochure has been downloaded to your device.
+                </p>
+                <button
+                  className="btn btn-primary"
+                  style={{ background: '#2563EB', borderColor: '#2563EB', width: '100%', borderRadius: 'var(--radius-pill)' }}
+                  onClick={() => {
+                    setShowBrochureModal(false);
+                    setBrochureDone(false);
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleBrochureDownload} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '4px', display: 'block' }}>
+                    Full Name *
+                  </label>
+                  <input
+                    className="input"
+                    placeholder="Enter your name"
+                    required
+                    value={brochureForm.name}
+                    onChange={e => setBrochureForm({ ...brochureForm, name: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, marginBottom: '4px', display: 'block' }}>
+                    Mobile Number *
+                  </label>
+                  <input
+                    className="input"
+                    placeholder="10-digit mobile"
+                    type="tel"
+                    required
+                    pattern="[0-9]{10}"
+                    value={brochureForm.phone}
+                    onChange={e => setBrochureForm({ ...brochureForm, phone: e.target.value })}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{ background: '#2563EB', borderColor: '#2563EB', borderRadius: 'var(--radius-pill)', padding: '12px', fontWeight: 700, justifyContent: 'center' }}
+                >
+                  Download Brochure Now →
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Lightbox Modal for Gallery and Floor Plans ─────────────────────── */}
+      {lightboxData && (
+        <div className="fm-lightbox" onClick={() => setLightboxData(null)} role="dialog" aria-modal="true">
+          <div className="fm-lightbox-content" onClick={e => e.stopPropagation()}>
+            <button className="fm-lightbox-close" onClick={() => setLightboxData(null)}>×</button>
+            <img src={lightboxData.src} alt={lightboxData.title} className="fm-lightbox-img" />
+            <div className="fm-lightbox-info">
+              <h4 style={{ margin: '0 0 4px', fontSize: '1.15rem' }}>{lightboxData.title}</h4>
+              {lightboxData.desc && (
+                <p style={{ margin: 0, fontSize: '0.875rem', opacity: 0.8 }}>{lightboxData.desc}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Footer ──────────────────────────────────────────────────────────── */}
+      <footer className="pm-footer" role="contentinfo">
+        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '2.5rem', marginBottom: '2.5rem' }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.35rem', color: '#2563EB', marginBottom: '0.75rem' }}>
+              FlatMark
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: '1.6', margin: '0 0 1rem' }}>
+              Premium high-rise gated community featuring 224 residences across 3 towers. Developed as a showcase template for DeccanIDentity.
+            </p>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              {PROJECT_INFO.rera}
+            </div>
+          </div>
+
+          <div>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+              Quick Navigation
+            </h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <li><button onClick={() => { setActivePage('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ color: 'inherit' }}>Home Overview</button></li>
+              <li><button onClick={() => { setActivePage('towers'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ color: 'inherit' }}>Three Towers</button></li>
+              <li><button onClick={() => { setActivePage('floorplans'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ color: 'inherit' }}>Floor Plans &amp; Blueprints</button></li>
+              <li><button onClick={() => { setActivePage('amenities'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ color: 'inherit' }}>Podium Amenities</button></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+              Apartment Towers
+            </h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <li>Tower A — The Azure (10 Floors · 2 &amp; 3 BHK)</li>
+              <li>Tower B — The Apex (12 Floors · 2, 3 &amp; 4 BHK)</li>
+              <li>Tower C — The Aria (8 Floors · 2 BHK Boutique)</li>
+              <li>Podium Deck — 45,000 Sq.Ft Greenery</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+              Sales &amp; Site Gallery
+            </h4>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
+              📍 {PROJECT_INFO.location}
+            </p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
+              📞 Phone: <strong>{siteConfig.phone}</strong>
+            </p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 1rem' }}>
+              💬 WhatsApp: <strong>{siteConfig.whatsapp}</strong>
+            </p>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Working Hours: 9:00 AM – 7:30 PM (All 7 Days)
+            </div>
+          </div>
+        </div>
+
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+          <div>© 2026 FlatMark Skyline Residences. All rights reserved.</div>
+          <div>Showcase Template by <Link to="/" style={{ color: '#2563EB', fontWeight: 600 }}>DeccanIDentity</Link></div>
         </div>
       </footer>
+
+      {/* Floating WhatsApp Action Button */}
+      <a
+        href={getWhatsAppUrl()}
+        target="_blank"
+        rel="noreferrer"
+        className="floating-wa"
+        aria-label="Enquire on WhatsApp"
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          zIndex: 99,
+          background: '#25D366',
+          color: '#ffffff',
+          width: '56px',
+          height: '56px',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.75rem',
+          boxShadow: '0 8px 24px rgba(37, 211, 102, 0.4)',
+          transition: 'transform 0.2s ease',
+        }}
+      >
+        💬
+      </a>
     </div>
   );
 }

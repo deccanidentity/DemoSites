@@ -55,7 +55,7 @@ export default function Home() {
                 <span className="hero__stat-inline-dot" aria-hidden="true">•</span>
                 <div className="hero__stat-inline-item" role="listitem">
                   <span className="hero__stat-inline-icon" aria-hidden="true">🚀</span>
-                  <strong>13</strong>
+                  <strong>{templates.length}</strong>
                   <span>Live Demo Sites</span>
                 </div>
                 <span className="hero__stat-inline-dot" aria-hidden="true">•</span>

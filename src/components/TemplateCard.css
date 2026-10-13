@@ -25,6 +25,42 @@
   cursor: pointer;
 }
 
+.tcard__thumbnail-wrapper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.tcard__thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s var(--ease);
+}
+
+.tcard:hover .tcard__thumbnail-img {
+  transform: scale(1.08);
+}
+
+.tcard__thumbnail-badge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(10, 25, 47, 0.88);
+  backdrop-filter: blur(6px);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  z-index: 2;
+}
+
 .tcard__preview-bg {
   position: absolute;
   inset: 0;

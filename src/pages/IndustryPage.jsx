@@ -12,7 +12,10 @@ export default function IndustryPage() {
   const [activeType, setActiveType] = useState('All');
 
   const industryTemplates = useMemo(
-    () => templates.filter(t => t.industry === industry || (industry === 'technology' && t.industry === 'other')),
+    () => {
+      const list = templates.filter(t => t.industry === industry || (industry === 'technology' && t.industry === 'other'));
+      return [...list].sort((a, b) => parseInt(a.templateNumber || '99', 10) - parseInt(b.templateNumber || '99', 10));
+    },
     [industry]
   );
 
@@ -108,8 +111,8 @@ export default function IndustryPage() {
                 {activeType === 'All' ? `${industryTemplates.length} Templates` : `${filtered.length} ${activeType} Templates`}
               </h2>
               <div className="templates-grid-4">
-                {filtered.map(t => (
-                  <TemplateCard key={t.slug} template={t} />
+                {filtered.map((t, idx) => (
+                  <TemplateCard key={t.slug} template={t} index={idx} />
                 ))}
               </div>
             </>
