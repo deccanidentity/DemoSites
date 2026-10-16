@@ -41,27 +41,31 @@ export default function TechMarkDemo() {
         </div>
       </nav>
 
-      <main className="pm-main">
+      <main className="pm-main" style={{ paddingTop: '124px' }}>
         {activeTab === 'home' && (
           <div>
             {/* Hero */}
-            <section style={{ minHeight: '82vh', display: 'flex', alignItems: 'center', background: theme === 'light' ? 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #f8fafc 100%)' : 'radial-gradient(ellipse at 70% 30%, rgba(59,130,246,0.2), transparent 70%), linear-gradient(180deg, #030712 0%, #080e21 100%)', position: 'relative' }}>
-              <div className="container" style={{ padding: 'var(--space-16) var(--space-6)' }}>
-                <div className="badge" style={{ background: 'rgba(59,130,246,0.15)', color: '#2563eb', border: '1px solid rgba(59,130,246,0.3)', marginBottom: 'var(--space-4)', display: 'inline-flex', padding: '4px 12px', borderRadius: 'var(--radius-pill)', fontSize: '0.75rem', fontWeight: 700 }}>
+            <section style={{ minHeight: '78vh', display: 'flex', alignItems: 'center', background: theme === 'light' ? 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #f8fafc 100%)' : 'radial-gradient(ellipse at 70% 30%, rgba(59,130,246,0.2), transparent 70%), linear-gradient(180deg, #030712 0%, #080e21 100%)', position: 'relative' }}>
+              <div className="container" style={{ padding: 'var(--space-10) var(--space-6)' }}>
+                <div className="badge" style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.35)', marginBottom: 'var(--space-4)', display: 'inline-flex', padding: '6px 14px', borderRadius: 'var(--radius-pill)', fontSize: '0.75rem', fontWeight: 700 }}>
                   🚀 NEXT-GEN ENTERPRISE CLOUD PLATFORM
                 </div>
                 <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.4rem, 5vw, 4rem)', fontWeight: 800, lineHeight: 1.15, marginBottom: 'var(--space-4)', color: theme === 'light' ? '#0f172a' : '#f8fafc' }}>
                   Intelligent Identity.<br />
                   <span style={{ color: '#3b82f6' }}>Engineered for Scale.</span>
                 </h1>
-                <p style={{ fontSize: '1.15rem', color: theme === 'light' ? '#475569' : '#94a3b8', maxWidth: 560, marginBottom: 'var(--space-8)', lineHeight: 1.7 }}>
+                <p style={{ fontSize: '1.15rem', color: theme === 'light' ? '#475569' : '#cbd5e1', maxWidth: 560, marginBottom: 'var(--space-8)', lineHeight: 1.7 }}>
                   Autonomous identity orchestration, zero-trust security architecture, and unified API gateways built for high-throughput engineering teams.
                 </p>
                 <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
                   <button className="btn btn-lg" style={{ background: '#3b82f6', color: '#fff', borderRadius: 'var(--radius-pill)', fontWeight: 700 }} onClick={() => setDemoModal(true)}>
                     Schedule 15-Min Live Demo
                   </button>
-                  <button className="btn btn-outline btn-lg" onClick={() => setActiveTab('pricing')}>
+                  <button
+                    className="btn btn-outline btn-lg"
+                    style={{ color: theme === 'light' ? '#0f172a' : '#f8fafc', borderColor: theme === 'light' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.25)', background: theme === 'light' ? 'transparent' : 'rgba(255,255,255,0.05)' }}
+                    onClick={() => setActiveTab('pricing')}
+                  >
                     View Pricing Plans
                   </button>
                 </div>
@@ -69,7 +73,7 @@ export default function TechMarkDemo() {
             </section>
 
             {/* Performance Metrics */}
-            <section className="container" style={{ margin: '-30px auto var(--space-10)', position: 'relative', zIndex: 10 }}>
+            <section className="container" style={{ margin: '-20px auto var(--space-10)', position: 'relative', zIndex: 10 }}>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 'var(--space-4)' }}>
                 {[
                   { n: '99.99%', l: 'Guaranteed SLA Uptime' },
@@ -77,9 +81,9 @@ export default function TechMarkDemo() {
                   { n: '100M+', l: 'Daily Authentications' },
                   { n: 'SOC-2', l: 'Type II & ISO 27001' },
                 ].map(m => (
-                  <div key={m.l} style={{ background: theme === 'light' ? '#ffffff' : '#0f172a', border: `1px solid ${theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', textAlign: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.05)' }}>
+                  <div key={m.l} style={{ background: theme === 'light' ? '#ffffff' : '#0f172a', border: `1px solid ${theme === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)'}`, borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', textAlign: 'center', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
                     <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#3b82f6', fontFamily: 'var(--font-display)' }}>{m.n}</div>
-                    <div style={{ fontSize: '0.8125rem', color: theme === 'light' ? '#64748b' : '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.l}</div>
+                    <div style={{ fontSize: '0.8125rem', color: theme === 'light' ? '#64748b' : '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>{m.l}</div>
                   </div>
                 ))}
               </div>

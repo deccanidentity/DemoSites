@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import siteConfig from '../../data/site.config.js';
 import DemoBar from '../../components/DemoBar.jsx';
@@ -127,98 +127,309 @@ function PlotModal({ plot, onClose, onEnquire, onBookVisit, onStatusChange }) {
   );
 }
 
-// ─── Brochure Download Modal ──────────────────────────────────────────────────
-function BrochureModal({ project, onClose }) {
-  const [name, setName] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [downloaded, setDownloaded] = useState(false);
+// ─── Brochure Download Function (Direct & Unrestricted) ───────────────────────
+function downloadProjectBrochure(project) {
+  const proj = project || PLOT_PROJECTS[0];
+  const projName = proj?.name || 'PlotMark-County';
+  const blobContent = `========================================================================
+${projName.toUpperCase()} — OFFICIAL PROJECT BROCHURE & MASTERPLAN
+========================================================================
+Developer: PlotMark Developers Pvt. Ltd. (DeccanIDentity Real Estate)
+Corridor: ${proj?.location || 'Hyderabad Growth Corridor'}
+Government Approval: ${proj?.approvalDetails || 'HMDA & RERA Approved'}
+Project Stage: ${proj?.stageLabel || 'Approved Residential Township'}
+Plot Size Range: ${proj?.plotSizeRange || '150 – 500 Sq.Yds'}
+Starting Price: ${proj?.startingPrice || '₹35.25 Lakhs'} (Rate: ${proj?.ratePerYd || '₹23,500/Sq.Yd'})
+Live Availability: ${proj?.availablePlots || 'Available'} Plots Ready for Registration
 
-  function handleDownload(e) {
-    e.preventDefault();
-    if (!name || !mobile) return;
+------------------------------------------------------------------------
+1. PROJECT HIGHLIGHTS & TOWNSHIP SPECIFICATIONS
+------------------------------------------------------------------------
+${(proj?.highlights || [
+  '100% Vaastu Compliant Layout',
+  '40 Ft & 30 Ft BT Roads with Footpaths',
+  'Underground Drainage (UGD) & Electricity Lines',
+  'Landscaped Central Park & Children Play Zone',
+  'Pre-Approved Bank Loans (SBI, HDFC, ICICI, Axis Bank)',
+]).map(h => `• ${h}`).join('\n')}
 
-    // Trigger mock brochure file download
-    const projName = project?.name || 'PlotMark-County';
-    const blobContent = `=====================================================
-${projName.toUpperCase()} — OFFICIAL OPEN PLOT BROCHURE
-=====================================================
-Developer: PlotMark Developers Pvt. Ltd.
-Location: ${project?.location || 'Hyderabad Growth Corridor'}
-Approvals: ${project?.approvalDetails || 'HMDA & RERA Approved'}
-Plot Sizes: ${project?.plotSizeRange || '150 - 500 Sq.Yds'}
-Starting Price: ${project?.startingPrice || '₹35 Lakhs'}
+------------------------------------------------------------------------
+2. ROADS & INFRASTRUCTURE
+------------------------------------------------------------------------
+Road Network: ${proj?.roads || '40 Ft Main Road & 30 Ft Internal BT Roads'}
+Utilities: ${proj?.utilities || 'Underground Drainage, Overhead Water Tank, Power Cabling, LED Streetlights'}
 
-KEY HIGHLIGHTS:
-- 100% Vaastu Compliant Layout
-- 40 Ft & 30 Ft Wide Blacktop Roads with Kerb Stones
-- Underground Drainage (UGD) & Electricity with Transformers
-- 24x7 Gated Security with CC Cameras
-- Bank Loan Approved by SBI, HDFC, ICICI (Up to 75%)
-- Immediate Spot Registration with Clear Title
+Completed Facilities:
+${(proj?.completedFacilities || [
+  'Grand Entrance Arch with 24x7 Security Cabin & Boom Barrier',
+  '40 Ft & 30 Ft BT Roads with Kerb Stones & Stormwater Drains',
+  'Solar-Fenced Outer Compound Wall with Guard Posts',
+  'Underground Drainage & Water Pipeline Network',
+]).map(f => `  [✓] ${f}`).join('\n')}
 
-CONTACT SALES:
+------------------------------------------------------------------------
+3. STRATEGIC LOCATION CONNECTIVITY
+------------------------------------------------------------------------
+${(proj?.locationAdvantages || [
+  { landmark: 'Outer Ring Road (ORR) Junction', dist: '5 mins' },
+  { landmark: 'RGIA International Airport', dist: '20 mins' },
+  { landmark: 'Financial District & IT SEZ', dist: '25 mins' },
+]).map(loc => `• ${loc.landmark}: ${loc.dist}`).join('\n')}
+
+------------------------------------------------------------------------
+4. VERIFIED LEGAL TITLES & SPOT REGISTRATION
+------------------------------------------------------------------------
+• 100% Clear Title Free of All Encumbrances
+• Immediate Spot Sub-Registrar Registration Available
+• Pre-Approved Bank Loan Facility (Up to 75% Funding Available)
+
+Direct Sales Advisory:
 Phone: ${siteConfig.phone}
 WhatsApp: ${siteConfig.whatsapp}
 Website: https://deccanidentity.com/demo/plotmark
-=====================================================`;
+========================================================================`;
 
-    const blob = new Blob([blobContent], { type: 'text/plain;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${projName.replace(/\s+/g, '-')}-Brochure.txt`;
-    link.click();
+  const blob = new Blob([blobContent], { type: 'text/plain;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${projName.replace(/\s+/g, '-')}-Official-Brochure.txt`;
+  link.click();
+}
 
+// ─── Single Project Brochure Modal (Instant View & Direct Download) ────────────
+function BrochureModal({ project, onClose }) {
+  const [downloaded, setDownloaded] = useState(false);
+  const proj = project || PLOT_PROJECTS[0];
+
+  function handleDirectDownload() {
+    downloadProjectBrochure(proj);
     setDownloaded(true);
   }
 
   return (
     <div className="plot-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="brochure-title">
-      <div className="plot-modal" onClick={e => e.stopPropagation()}>
+      <div className="plot-modal pm-brochure-modal" onClick={e => e.stopPropagation()}>
         <button className="plot-modal__close" onClick={onClose} aria-label="Close">×</button>
-        <h3 id="brochure-title" style={{ marginBottom: 'var(--space-2)' }}>Download Brochure</h3>
-        <p style={{ color: 'var(--brand-gold)', fontSize: '0.875rem', fontWeight: 600, marginBottom: 'var(--space-4)' }}>
-          {project ? project.name : 'PlotMark Open Plot Ventures'}
-        </p>
 
-        {downloaded ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-4) 0' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📄✅</div>
-            <h4 style={{ color: '#16a34a', marginBottom: '8px' }}>Brochure Downloaded!</h4>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-              Your official project brochure has been downloaded to your device. We have also queued the details for WhatsApp delivery.
-            </p>
-            <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} onClick={onClose}>
-              Done
-            </button>
+        <div className="pm-bmodal-header">
+          <div className="badge badge-gold" style={{ marginBottom: 4 }}>Official Project Document</div>
+          <h2 id="brochure-title" style={{ fontSize: '1.4rem', margin: '4px 0 6px' }}>{proj.name}</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+            📍 {proj.location} · <strong style={{ color: 'var(--brand-gold)' }}>{proj.approvalDetails}</strong>
+          </p>
+        </div>
+
+        {downloaded && (
+          <div className="pm-bmodal-alert success">
+            <span>✅ Official brochure file downloaded directly to your device!</span>
           </div>
-        ) : (
-          <form onSubmit={handleDownload} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', margin: 0 }}>
-              Enter your details to instantly download the master layout plan and verified approval documents.
-            </p>
-            <input
-              className="input"
-              placeholder="Your Full Name"
-              required
-              value={name}
-              onChange={e => setName(e.target.value)}
-              aria-label="Name"
-            />
-            <input
-              className="input"
-              placeholder="10-Digit Mobile / WhatsApp Number"
-              type="tel"
-              required
-              pattern="[0-9]{10}"
-              value={mobile}
-              onChange={e => setMobile(e.target.value)}
-              aria-label="WhatsApp number"
-            />
-            <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center', marginTop: 4 }}>
-              📥 Download Official Brochure
-            </button>
-          </form>
         )}
+
+        {/* Brochure Preview Card */}
+        <div className="pm-bmodal-body">
+          <div className="pm-bmodal-preview-grid">
+            <div className="pm-bmodal-cover-wrap">
+              <img src={proj.coverImage} alt={proj.name} className="pm-bmodal-cover-img" />
+              <div className="pm-bmodal-badge">{proj.stageLabel}</div>
+            </div>
+            <div className="pm-bmodal-specs">
+              <div className="pm-bmodal-spec-row">
+                <span>Plot Area:</span>
+                <strong>{proj.plotSizeRange}</strong>
+              </div>
+              <div className="pm-bmodal-spec-row">
+                <span>Base Rate:</span>
+                <strong>{proj.ratePerYd || '₹23,500/Yd'}</strong>
+              </div>
+              <div className="pm-bmodal-spec-row">
+                <span>Starting Cost:</span>
+                <strong style={{ color: 'var(--brand-gold)' }}>{proj.startingPrice}</strong>
+              </div>
+              <div className="pm-bmodal-spec-row">
+                <span>Registration:</span>
+                <strong style={{ color: '#16a34a' }}>Spot Sub-Registrar</strong>
+              </div>
+              <div className="pm-bmodal-spec-row">
+                <span>Bank Loan:</span>
+                <strong>Up to 75% Pre-Approved</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="pm-bmodal-highlights">
+            <h4 style={{ fontSize: '0.875rem', marginBottom: 8, color: 'var(--text-primary)' }}>Key Township Features:</h4>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+              {(proj.highlights || []).slice(0, 4).map((h, i) => (
+                <li key={i}>{h}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Action Buttons: Direct Download & WhatsApp */}
+        <div className="pm-bmodal-actions">
+          <button
+            className="btn btn-primary btn-lg"
+            onClick={handleDirectDownload}
+            style={{ flex: 1, justifyContent: 'center' }}
+          >
+            📥 Download Official Brochure (Instant)
+          </button>
+          <a
+            href={`https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+              `Hi! Please send me the official PDF brochure and price list for ${proj.name} (${proj.location}).`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-whatsapp btn-lg"
+            style={{ justifyContent: 'center' }}
+          >
+            💬 Get on WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Multi-Project Brochures List Modal (All Available Brochures) ─────────────
+function BrochuresListModal({ onClose, onViewBrochure }) {
+  const [filterStage, setFilterStage] = useState('all');
+  const [search, setSearch] = useState('');
+  const [downloadSuccessId, setDownloadSuccessId] = useState(null);
+
+  const filteredBrochures = useMemo(() => {
+    return PLOT_PROJECTS.filter(proj => {
+      if (filterStage !== 'all' && proj.stage !== filterStage) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase().trim();
+        return proj.name.toLowerCase().includes(q) || proj.location.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [filterStage, search]);
+
+  function handleDownloadBrochure(proj) {
+    downloadProjectBrochure(proj);
+    setDownloadSuccessId(proj.id);
+    setTimeout(() => setDownloadSuccessId(null), 4000);
+  }
+
+  return (
+    <div className="plot-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="brochures-list-title">
+      <div className="plot-modal pm-brochures-list-modal" onClick={e => e.stopPropagation()}>
+        <button className="plot-modal__close" onClick={onClose} aria-label="Close">×</button>
+
+        <div className="pm-blist-header">
+          <div className="badge badge-gold" style={{ marginBottom: 4 }}>Unrestricted Direct Access</div>
+          <h2 id="brochures-list-title" style={{ fontSize: '1.5rem', margin: '4px 0 6px' }}>
+            Official Project Brochures & Masterplans
+          </h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
+            Download verified layout blueprints, approval documents, and pricing sheets directly — no contact details or signup required.
+          </p>
+        </div>
+
+        {/* Filter Toolbar */}
+        <div className="pm-blist-toolbar">
+          <div
+            className="pm-stage-tabs"
+            role="tablist"
+            style={{ margin: 0 }}
+            onWheel={(e) => {
+              if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && e.currentTarget.scrollWidth > e.currentTarget.clientWidth) {
+                e.currentTarget.scrollLeft += e.deltaY;
+              }
+            }}
+          >
+            {[
+              ['all', 'All Brochures (6)'],
+              ['ongoing', 'Ongoing (2)'],
+              ['completed', 'Completed (2)'],
+              ['upcoming', 'Upcoming (2)'],
+            ].map(([val, label]) => (
+              <button
+                key={val}
+                className={`pm-stage-tab ${filterStage === val ? 'active' : ''}`}
+                onClick={(e) => {
+                  setFilterStage(val);
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }}
+                role="tab"
+                aria-selected={filterStage === val}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <input
+            className="pm-plot-search-input"
+            placeholder="🔍 Search project name or corridor..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ maxWidth: 260 }}
+            aria-label="Search brochures"
+          />
+        </div>
+
+        {downloadSuccessId && (
+          <div className="pm-bmodal-alert success" style={{ margin: '12px 0 0' }}>
+            <span>✅ Official brochure document downloaded directly to your device!</span>
+          </div>
+        )}
+
+        {/* Brochures Grid List */}
+        <div className="pm-blist-grid">
+          {filteredBrochures.map(proj => (
+            <div key={proj.id} className="pm-blist-card">
+              <div className="pm-blist-card__thumb">
+                <img src={proj.coverImage} alt={proj.name} />
+                <span className={`pm-nav__thumb-badge ${proj.stage}`}>{proj.stage}</span>
+              </div>
+              <div className="pm-blist-card__content">
+                <h3 className="pm-blist-card__title">{proj.name}</h3>
+                <div className="pm-blist-card__loc">📍 {proj.location}</div>
+                <div className="pm-blist-card__specs">
+                  <span>📐 {proj.plotSizeRange}</span>
+                  <span style={{ color: 'var(--brand-gold)', fontWeight: 700 }}>💰 From {proj.startingPrice}</span>
+                  <span>🛡️ {proj.approvalType}</span>
+                </div>
+                <div className="pm-blist-card__approval">
+                  {proj.approvalDetails}
+                </div>
+              </div>
+              <div className="pm-blist-card__actions">
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={() => {
+                    onClose();
+                    onViewBrochure(proj);
+                  }}
+                  title="View Brochure Details"
+                >
+                  👁️ View
+                </button>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => handleDownloadBrochure(proj)}
+                  title="Direct Download Brochure Document"
+                >
+                  📥 Download
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="pm-blist-footer">
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+            All documents are verified with HMDA & Telangana RERA sanction records.
+          </span>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -553,16 +764,23 @@ function AdminModal({ activeProject, onSelectProject, plots, onStatusChange, sit
 }
 
 // ─── Single Project Card Component ────────────────────────────────────────────
-function ProjectCard({ project, onSelectProject, onOpenLayout, onOpenBrochure, onOpenVisit }) {
+function ProjectCard({ project, onSelectProject, onOpenLayout, onOpenBrochure, onOpenVisit, showVisit = true }) {
+  const stageBadges = {
+    ongoing: { text: '🚧 Ongoing Development', class: 'ongoing' },
+    completed: { text: '🏆 Completed · Delivered', class: 'completed' },
+    upcoming: { text: '🚀 Upcoming · Pre-Launch', class: 'upcoming' },
+  };
+  const stageInfo = stageBadges[project.stage] || { text: project.statusBadge, class: '' };
+
   return (
     <article className="pm-project-card">
       <div className="pm-project-card__img-wrap">
         <img src={project.coverImage} alt={project.name} className="pm-project-card__img" loading="lazy" />
-        <div className="pm-project-card__status-badge">
-          {project.statusBadge}
+        <div className={`pm-project-card__stage-tag ${stageInfo.class}`}>
+          {stageInfo.text}
         </div>
         <div className="pm-project-card__avail-badge">
-          🟢 {project.availablePlots} Plots Available
+          {project.stage === 'upcoming' ? '⚡ Priority Tokens Open' : `🟢 ${project.availablePlots} Plots Available`}
         </div>
       </div>
 
@@ -619,13 +837,15 @@ function ProjectCard({ project, onSelectProject, onOpenLayout, onOpenBrochure, o
           >
             📥 Brochure
           </button>
-          <button
-            className="btn btn-outline"
-            onClick={() => onOpenVisit(project)}
-            aria-label={`Schedule site visit for ${project.name}`}
-          >
-            🚗 Site Visit
-          </button>
+          {showVisit && onOpenVisit && (
+            <button
+              className="btn btn-outline"
+              onClick={() => onOpenVisit(project)}
+              aria-label={`Schedule site visit for ${project.name}`}
+            >
+              🚗 Site Visit
+            </button>
+          )}
         </div>
       </div>
     </article>
@@ -893,7 +1113,7 @@ function ProjectDetailPage({ project, onBack, onOpenLayout, onOpenBrochure, onOp
 }
 
 // ─── Homepage Component ───────────────────────────────────────────────────────
-function HomePage({ setActivePage, onSelectProject, onOpenLayout, onOpenBrochure, onOpenVisit, plots }) {
+function HomePage({ setActivePage, onSelectProject, onOpenLayout, onOpenBrochure, onOpenBrochuresList, onOpenVisit, plots }) {
   const counts = useMemo(() => {
     return {
       available: plots.filter(p => p.status === 'available').length,
@@ -926,9 +1146,9 @@ function HomePage({ setActivePage, onSelectProject, onOpenLayout, onOpenBrochure
             </button>
             <button
               className="btn btn-outline btn-lg"
-              onClick={() => onOpenBrochure(PLOT_PROJECTS[0])}
+              onClick={() => onOpenBrochuresList ? onOpenBrochuresList() : onOpenBrochure(PLOT_PROJECTS[0])}
             >
-              📥 Download Brochure
+              📥 All Brochures
             </button>
             <button
               className="btn btn-ghost btn-lg"
@@ -997,7 +1217,7 @@ function HomePage({ setActivePage, onSelectProject, onOpenLayout, onOpenBrochure
             </p>
           </div>
           <button className="btn btn-outline" onClick={() => setActivePage('projects')}>
-            View All 4 Projects →
+            View All {PLOT_PROJECTS.length} Projects →
           </button>
         </div>
 
@@ -1010,6 +1230,7 @@ function HomePage({ setActivePage, onSelectProject, onOpenLayout, onOpenBrochure
               onOpenLayout={onOpenLayout}
               onOpenBrochure={onOpenBrochure}
               onOpenVisit={onOpenVisit}
+              showVisit={false}
             />
           ))}
         </div>
@@ -1076,14 +1297,48 @@ function HomePage({ setActivePage, onSelectProject, onOpenLayout, onOpenBrochure
 }
 
 // ─── Open Plot Projects Listings Page ─────────────────────────────────────────
-function ProjectsPage({ onSelectProject, onOpenLayout, onOpenBrochure, onOpenVisit }) {
+function ProjectsPage({
+  initialStage = 'all',
+  onStageChange,
+  onSelectProject,
+  onOpenLayout,
+  onOpenBrochure,
+  onOpenVisit,
+}) {
+  const [stageFilter, setStageFilter] = useState(initialStage);
   const [filterLoc, setFilterLoc] = useState('all');
   const [filterBudget, setFilterBudget] = useState('all');
   const [filterSize, setFilterSize] = useState('all');
   const [filterApproval, setFilterApproval] = useState('all');
 
+  useEffect(() => {
+    if (initialStage) {
+      setStageFilter(initialStage);
+    }
+  }, [initialStage]);
+
+  const handleStageSelect = (stage) => {
+    setStageFilter(stage);
+    if (onStageChange) {
+      onStageChange(stage);
+    }
+  };
+
+  const stageCounts = useMemo(() => {
+    return {
+      all: PLOT_PROJECTS.length,
+      ongoing: PLOT_PROJECTS.filter(p => p.stage === 'ongoing').length,
+      completed: PLOT_PROJECTS.filter(p => p.stage === 'completed').length,
+      upcoming: PLOT_PROJECTS.filter(p => p.stage === 'upcoming').length,
+    };
+  }, []);
+
   const filtered = useMemo(() => {
     return PLOT_PROJECTS.filter(p => {
+      // Stage filter
+      if (stageFilter !== 'all' && p.stage !== stageFilter) {
+        return false;
+      }
       // Location filter
       if (filterLoc !== 'all' && !p.location.toLowerCase().includes(filterLoc.toLowerCase())) {
         return false;
@@ -1101,7 +1356,7 @@ function ProjectsPage({ onSelectProject, onOpenLayout, onOpenBrochure, onOpenVis
 
       return true;
     });
-  }, [filterLoc, filterBudget, filterSize, filterApproval]);
+  }, [stageFilter, filterLoc, filterBudget, filterSize, filterApproval]);
 
   return (
     <div className="pm-section container">
@@ -1111,6 +1366,100 @@ function ProjectsPage({ onSelectProject, onOpenLayout, onOpenBrochure, onOpenVis
           Browse verified residential plotted developments with transparent plot sizes, pricing, and live availability.
         </p>
       </div>
+
+      {/* Stage Status Tabs: All, Ongoing, Completed, Upcoming */}
+      <div
+        className="pm-stage-tabs"
+        role="tablist"
+        aria-label="Filter by project stage"
+        onWheel={(e) => {
+          if (Math.abs(e.deltaY) > Math.abs(e.deltaX) && e.currentTarget.scrollWidth > e.currentTarget.clientWidth) {
+            e.currentTarget.scrollLeft += e.deltaY;
+          }
+        }}
+      >
+        <button
+          className={`pm-stage-tab ${stageFilter === 'all' ? 'active' : ''}`}
+          onClick={(e) => {
+            handleStageSelect('all');
+            e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          }}
+          role="tab"
+          aria-selected={stageFilter === 'all'}
+        >
+          <span className="pm-stage-tab__icon">🌟</span>
+          <span className="pm-stage-tab__label">All Projects</span>
+          <span className="pm-stage-tab__badge">{stageCounts.all}</span>
+        </button>
+
+        <button
+          className={`pm-stage-tab ${stageFilter === 'ongoing' ? 'active' : ''}`}
+          onClick={(e) => {
+            handleStageSelect('ongoing');
+            e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          }}
+          role="tab"
+          aria-selected={stageFilter === 'ongoing'}
+        >
+          <span className="pm-stage-tab__icon">🚧</span>
+          <span className="pm-stage-tab__label">Ongoing Projects</span>
+          <span className="pm-stage-tab__badge ongoing">{stageCounts.ongoing}</span>
+        </button>
+
+        <button
+          className={`pm-stage-tab ${stageFilter === 'completed' ? 'active' : ''}`}
+          onClick={(e) => {
+            handleStageSelect('completed');
+            e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          }}
+          role="tab"
+          aria-selected={stageFilter === 'completed'}
+        >
+          <span className="pm-stage-tab__icon">🏆</span>
+          <span className="pm-stage-tab__label">Completed Projects</span>
+          <span className="pm-stage-tab__badge completed">{stageCounts.completed}</span>
+        </button>
+
+        <button
+          className={`pm-stage-tab ${stageFilter === 'upcoming' ? 'active' : ''}`}
+          onClick={(e) => {
+            handleStageSelect('upcoming');
+            e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+          }}
+          role="tab"
+          aria-selected={stageFilter === 'upcoming'}
+        >
+          <span className="pm-stage-tab__icon">🚀</span>
+          <span className="pm-stage-tab__label">Upcoming Projects</span>
+          <span className="pm-stage-tab__badge upcoming">{stageCounts.upcoming}</span>
+        </button>
+      </div>
+
+      {/* Stage Status Context Banner */}
+      {stageFilter === 'ongoing' && (
+        <div className="pm-stage-banner ongoing">
+          <span style={{ fontSize: '1.25rem' }}>🚧</span>
+          <div>
+            <strong>Active Site Construction:</strong> These developments are under active execution with completed underground drainage, water pipelines, and on-schedule BT road laying.
+          </div>
+        </div>
+      )}
+      {stageFilter === 'completed' && (
+        <div className="pm-stage-banner completed">
+          <span style={{ fontSize: '1.25rem' }}>🏆</span>
+          <div>
+            <strong>100% Delivered & Handed Over:</strong> All infrastructure, clubhouse facilities, landscaped parks, and perimeter security are fully commissioned. Ready for immediate villa construction.
+          </div>
+        </div>
+      )}
+      {stageFilter === 'upcoming' && (
+        <div className="pm-stage-banner upcoming">
+          <span style={{ fontSize: '1.25rem' }}>🚀</span>
+          <div>
+            <strong>Pre-Launch Priority Allotment:</strong> Inaugural booking prices with highest expected appreciation upon final RERA clearance. Priority token bookings now open.
+          </div>
+        </div>
+      )}
 
       {/* Filter Bar */}
       <div className="pm-filter-bar">
@@ -1127,6 +1476,8 @@ function ProjectsPage({ onSelectProject, onOpenLayout, onOpenBrochure, onOpenVis
             <option value="shamshabad">Shamshabad / Airport</option>
             <option value="srisailam">Pharma City / Srisailam Hwy</option>
             <option value="ghatkesar">Ghatkesar / Warangal Hwy</option>
+            <option value="kollur">Kollur / ORR Growth Belt</option>
+            <option value="sadashivpet">Sadashivpet / Mumbai Hwy</option>
           </select>
 
           {/* Budget */}
@@ -1191,18 +1542,19 @@ function ProjectsPage({ onSelectProject, onOpenLayout, onOpenBrochure, onOpenVis
         <div style={{ textAlign: 'center', padding: 'var(--space-12) 0', color: 'var(--text-secondary)' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>🔍</div>
           <h3>No projects found matching selected filters</h3>
-          <p style={{ marginTop: 4 }}>Try clearing or adjusting your budget or location filters.</p>
+          <p style={{ marginTop: 4 }}>Try clearing or adjusting your stage, budget or location filters.</p>
           <button
             className="btn btn-outline"
             style={{ marginTop: 12 }}
             onClick={() => {
+              handleStageSelect('all');
               setFilterLoc('all');
               setFilterBudget('all');
               setFilterSize('all');
               setFilterApproval('all');
             }}
           >
-            Reset Filters
+            Reset All Filters
           </button>
         </div>
       )}
@@ -1219,18 +1571,27 @@ function LayoutPage({
   onStatusChange,
   onBookVisit,
   onOpenBrochure,
+  onOpenBrochuresList,
 }) {
   const project = activeProject || PLOT_PROJECTS[0];
   const config = PROJECT_LAYOUT_CONFIG[project.id] || PROJECT_LAYOUT_CONFIG['pm-shankarpally'];
 
   const [selected, setSelected] = useState(() => plots.find(p => p.status === 'available') || plots[0] || null);
-  const [viewMode, setViewMode] = useState('map'); // 'map' | 'table'
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sectorFilter, setSectorFilter] = useState('all');
   const [facingFilter, setFacingFilter] = useState('all');
   const [cornerOnly, setCornerOnly] = useState(false);
+
+  // Layout Plan Switcher & Pan/Zoom Controls
+  const [activePlanType, setActivePlanType] = useState('blueprint'); // 'blueprint' | 'masterplan'
   const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [touchStartDist, setTouchStartDist] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const viewportRef = useRef(null);
 
   // Automatically reset selected plot and filters when switching project
   useEffect(() => {
@@ -1241,6 +1602,9 @@ function LayoutPage({
     setSectorFilter('all');
     setFacingFilter('all');
     setCornerOnly(false);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setIsDragging(false);
   }, [project.id, plots]);
 
   const counts = useMemo(() => {
@@ -1315,6 +1679,94 @@ Website: https://deccanidentity.com/demo/plotmark
     link.click();
   }
 
+  // ── Pan and Zoom Handlers ──
+  function handleZoomIn() {
+    setZoom(z => Math.min(Number((z + 0.25).toFixed(2)), 3.5));
+  }
+
+  function handleZoomOut() {
+    setZoom(z => Math.max(Number((z - 0.25).toFixed(2)), 0.75));
+  }
+
+  function handleResetView() {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }
+
+  function handleMouseDown(e) {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  }
+
+  function handleMouseMove(e) {
+    if (!isDragging) return;
+    setPan({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  }
+
+  function handleMouseUp() {
+    setIsDragging(false);
+  }
+
+  function handleWheel(e) {
+    if (e.ctrlKey || Math.abs(e.deltaY) > 0) {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      setZoom(z => Math.min(Math.max(Number((z + delta).toFixed(2)), 0.75), 3.5));
+    }
+  }
+
+  function handleTouchStart(e) {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y,
+      });
+    } else if (e.touches.length === 2) {
+      setIsDragging(false);
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      setTouchStartDist(dist);
+    }
+  }
+
+  function handleTouchMove(e) {
+    if (e.touches.length === 1 && isDragging) {
+      setPan({
+        x: e.touches[0].clientX - dragStart.x,
+        y: e.touches[0].clientY - dragStart.y,
+      });
+    } else if (e.touches.length === 2 && touchStartDist) {
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const ratio = currentDist / touchStartDist;
+      if (Math.abs(ratio - 1) > 0.05) {
+        setZoom(z => Math.min(Math.max(Number((z * (ratio > 1 ? 1.05 : 0.95)).toFixed(2)), 0.75), 3.5));
+        setTouchStartDist(currentDist);
+      }
+    }
+  }
+
+  function handleTouchEnd() {
+    setIsDragging(false);
+    setTouchStartDist(null);
+  }
+
+  // Authentic Gallery-sourced layout drawing assets:
+  // Primary: /images/actual-site-layout.png (Verified Cadastral Survey & Master Layout Blueprint)
+  // Secondary: /images/plotmark-masterplan.jpg (Bird's Eye 3D Architectural Township Masterplan)
+  const blueprintSrc = '/images/actual-site-layout.png';
+  const masterplanSrc = '/images/plotmark-masterplan.jpg';
+  const activePlanImage = activePlanType === 'blueprint' ? blueprintSrc : masterplanSrc;
+
   return (
     <div className="pm-section container">
       {/* ── 0. Project Selector Bar (Updates Layout According to Selected Project) ── */}
@@ -1357,51 +1809,33 @@ Website: https://deccanidentity.com/demo/plotmark
             </span>
           </div>
           <h1 className="pm-section__title" style={{ fontSize: '1.75rem', marginBottom: 4 }}>
-            {project.name} — Interactive Plot Map
+            {project.name} — Authentic Site Layout Plan
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', margin: 0 }}>
-            {project.approvalDetails} · 100% Vaastu Compliant Layout
+            {project.approvalDetails} · 100% Vaastu Compliant Surveyed Drawing
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button
+            className="btn btn-outline pm-layout-brochures-btn"
+            onClick={() => onOpenBrochuresList ? onOpenBrochuresList() : onOpenBrochure(project)}
+            aria-label="View and download project brochures"
+          >
+            📥 All Brochures (6)
+          </button>
           <button
             className="btn btn-primary"
             onClick={() => onBookVisit(project, selected)}
+            aria-label="Schedule a site visit"
           >
-            🚗 Schedule Layout Site Visit
-          </button>
-          <button
-            className="btn btn-outline"
-            onClick={() => onOpenBrochure(project)}
-          >
-            📥 Download Master Plan PDF
+            🚗 Book a Visit
           </button>
         </div>
       </div>
 
       {/* ── 2. Controls & Search Toolbar ─────────────────────────────────────── */}
       <div className="pm-layout-controls">
-        {/* View Switcher Tabs */}
-        <div className="pm-layout-view-tabs" role="tablist">
-          <button
-            className={`pm-layout-tab-btn ${viewMode === 'map' ? 'active' : ''}`}
-            onClick={() => setViewMode('map')}
-            role="tab"
-            aria-selected={viewMode === 'map'}
-          >
-            🗺️ Masterplan Map View
-          </button>
-          <button
-            className={`pm-layout-tab-btn ${viewMode === 'table' ? 'active' : ''}`}
-            onClick={() => setViewMode('table')}
-            role="tab"
-            aria-selected={viewMode === 'table'}
-          >
-            📋 Plot Directory Table ({filteredPlots.length})
-          </button>
-        </div>
-
         {/* Quick Search */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <input
@@ -1469,38 +1903,6 @@ Website: https://deccanidentity.com/demo/plotmark
             ⭐ Corner Only
           </button>
         </div>
-
-        {/* Zoom Controls (Map Mode) */}
-        {viewMode === 'map' && (
-          <div className="plot-map-zoom-btns">
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Zoom:</span>
-            <button
-              className="plot-map-zoom-btn"
-              onClick={() => setZoom(z => Math.min(z + 0.15, 1.75))}
-              title="Zoom In"
-              aria-label="Zoom In"
-            >
-              +
-            </button>
-            <button
-              className="plot-map-zoom-btn"
-              onClick={() => setZoom(z => Math.max(z - 0.15, 0.85))}
-              title="Zoom Out"
-              aria-label="Zoom Out"
-            >
-              −
-            </button>
-            <button
-              className="plot-map-zoom-btn"
-              style={{ width: 'auto', padding: '0 8px', fontSize: '0.75rem' }}
-              onClick={() => setZoom(1)}
-              title="Reset Zoom"
-              aria-label="Reset Zoom"
-            >
-              ↺ Reset
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ── 3. Split Layout: Canvas / Table on Left, Live Inspector on Right ──── */}
@@ -1530,260 +1932,144 @@ Website: https://deccanidentity.com/demo/plotmark
             </div>
           </div>
 
-          {viewMode === 'map' ? (
-            /* ── Interactive Masterplan SVG Canvas ── */
-            <div className="plot-map-wrap" style={{ overflow: 'auto', position: 'relative' }}>
-              <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', transition: 'transform 0.2s ease', minWidth: '760px' }}>
-                <svg className="plot-map" viewBox="0 0 760 425" aria-label={`${project.name} layout map`}>
-                  {/* Outer Gated Compound Boundary */}
-                  <rect x="8" y="8" width="744" height="408" fill="none" stroke="rgba(200,134,10,0.35)" strokeWidth="2" strokeDasharray="6 4" rx="10" />
+          {/* ── Original Project Layout Map (Sourced Directly from Gallery) ── */}
+          <div className="pm-original-map-container">
+              {/* Drawing Switcher and Zoom Toolbar */}
+              <div className="pm-plan-switcher-bar">
+                <div className="pm-plan-type-tabs" role="tablist" aria-label="Select layout drawing format">
+                  <button
+                    className={`pm-plan-type-btn ${activePlanType === 'blueprint' ? 'active' : ''}`}
+                    onClick={() => { setActivePlanType('blueprint'); handleResetView(); }}
+                    role="tab"
+                    aria-selected={activePlanType === 'blueprint'}
+                  >
+                    📐 Sanctioned Survey Blueprint (Plots 1–61)
+                  </button>
+                  <button
+                    className={`pm-plan-type-btn ${activePlanType === 'masterplan' ? 'active' : ''}`}
+                    onClick={() => { setActivePlanType('masterplan'); handleResetView(); }}
+                    role="tab"
+                    aria-selected={activePlanType === 'masterplan'}
+                  >
+                    🌿 3D Architectural Masterplan Render
+                  </button>
+                </div>
 
-                  {/* Solar Fencing Posts & Wall Labels */}
-                  <text x="380" y="24" fill="rgba(200,134,10,0.7)" fontSize="8" textAnchor="middle" letterSpacing="0.1em" fontFamily="Inter" fontWeight="600">
-                    {project.name.toUpperCase()} · PRECAST COMPOUND WALL WITH SOLAR SECURITY FENCING & BUFFER ZONE
-                  </text>
+                {/* Zoom & Inspection Controls */}
+                <div className="pm-plan-zoom-toolbar">
+                  <button
+                    className="pm-zoom-btn"
+                    onClick={handleZoomIn}
+                    title="Zoom In (+25%)"
+                    aria-label="Zoom In"
+                  >
+                    ➕
+                  </button>
+                  <span className="pm-zoom-indicator">{Math.round(zoom * 100)}%</span>
+                  <button
+                    className="pm-zoom-btn"
+                    onClick={handleZoomOut}
+                    title="Zoom Out (-25%)"
+                    aria-label="Zoom Out"
+                  >
+                    ➖
+                  </button>
+                  <button
+                    className="pm-zoom-btn"
+                    onClick={handleResetView}
+                    title="Reset Zoom & Pan"
+                    aria-label="Reset View"
+                  >
+                    ↺ Reset
+                  </button>
+                  <button
+                    className={`pm-zoom-btn ${isFullscreen ? 'active' : ''}`}
+                    onClick={() => setIsFullscreen(f => !f)}
+                    title={isFullscreen ? 'Exit Fullscreen' : 'View Fullscreen (⛶)'}
+                    aria-label="Toggle Fullscreen"
+                  >
+                    {isFullscreen ? '✕ Exit' : '⛶ Fullscreen'}
+                  </button>
+                </div>
+              </div>
 
-                  {/* ── Grand Entrance Gatehouse at South-West ── */}
-                  <g transform="translate(22, 348)">
-                    <rect x="0" y="0" width="78" height="52" fill="rgba(200,134,10,0.22)" rx="4" stroke="rgba(200,134,10,0.6)" strokeWidth="1.2" />
-                    <text x="39" y="19" fill="var(--brand-gold)" fontSize="10" textAnchor="middle">🏛️</text>
-                    <text x="39" y="31" fill="#ffffff" fontSize="7" textAnchor="middle" fontWeight="800">MAIN GATE</text>
-                    <text x="39" y="42" fill="rgba(255,255,255,0.75)" fontSize="6" textAnchor="middle">24x7 Security</text>
-                  </g>
-                  <text x="110" y="415" fill="var(--brand-gold)" fontSize="7.5" fontWeight="700" fontFamily="Inter">
-                    ← {config.gateLabel}
-                  </text>
+              {/* Interactive Pan & Zoom Viewport */}
+              <div
+                ref={viewportRef}
+                className={`pm-original-map-viewport ${isDragging ? 'is-dragging' : ''} ${isFullscreen ? 'is-fullscreen' : ''}`}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onWheel={handleWheel}
+                role="region"
+                aria-label={`${project.name} Original Layout Drawing with pan and zoom`}
+                tabIndex={0}
+              >
+                {/* Orientation & Compass Badge */}
+                <div className="pm-map-compass-badge" aria-label="Layout orientation">
+                  <span className="pm-map-compass-arrow">🧭</span>
+                  <div>
+                    <div className="pm-map-compass-heading">NORTH-EAST</div>
+                    <div className="pm-map-compass-sub">Grand Entrance 100' Rd</div>
+                  </div>
+                </div>
 
-                  {/* ── Roads Network ── */}
-                  {/* Road 1 */}
-                  <rect x="20" y="114" width="720" height="28" fill="rgba(200,134,10,0.22)" rx="2" />
-                  <line x1="25" y1="128" x2="735" y2="128" stroke="rgba(255,255,255,0.25)" strokeWidth="1" strokeDasharray="8 6" />
-                  <text x="380" y="132" fill="rgba(200,134,10,0.95)" fontSize="8.5" textAnchor="middle" fontWeight="700" fontFamily="Inter">
-                    {config.road1}
-                  </text>
+                {/* Sanction Stamp Badge */}
+                <div className="pm-map-sanction-badge">
+                  <span className="pm-map-sanction-dot">●</span>
+                  <span>{activePlanType === 'blueprint' ? 'Official Sanctioned Survey Blueprint' : '3D Township Masterplan Render'} · Gallery Asset</span>
+                </div>
 
-                  {/* Road 2 */}
-                  <rect x="20" y="214" width="720" height="26" fill="rgba(200,134,10,0.18)" rx="2" />
-                  <line x1="25" y1="227" x2="735" y2="227" stroke="rgba(255,255,255,0.2)" strokeWidth="1" strokeDasharray="6 6" />
-                  <text x="380" y="231" fill="rgba(200,134,10,0.85)" fontSize="8" textAnchor="middle" fontWeight="600" fontFamily="Inter">
-                    {config.road2}
-                  </text>
+                {/* Plan Canvas Image with Pan & Zoom Transform */}
+                <div
+                  className="pm-original-map-canvas"
+                  style={{
+                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                    transformOrigin: 'center center',
+                  }}
+                >
+                  <img
+                    src={activePlanImage}
+                    alt={`${project.name} Original Sanctioned Master Layout Plan`}
+                    className="pm-original-layout-img"
+                    draggable={false}
+                  />
+                </div>
 
-                  {/* Road 3 */}
-                  <rect x="20" y="312" width="720" height="26" fill="rgba(200,134,10,0.18)" rx="2" />
-                  <line x1="25" y1="325" x2="735" y2="325" stroke="rgba(255,255,255,0.2)" strokeWidth="1" strokeDasharray="6 6" />
-                  <text x="420" y="329" fill="rgba(200,134,10,0.85)" fontSize="8" textAnchor="middle" fontWeight="600" fontFamily="Inter">
-                    {config.road3}
-                  </text>
+                {/* Interactive Helper Hint */}
+                <div className="pm-map-help-hint">
+                  <span>🖐️ Drag or swipe to pan</span>
+                  <span>·</span>
+                  <span>🔍 Use + / − or scroll to zoom</span>
+                  <span>·</span>
+                  <span className="pm-map-zoom-pill">{Math.round(zoom * 100)}%</span>
+                </div>
+              </div>
 
-                  {/* ── Central Amenity Zone (Row 1) ── */}
-                  <g transform="translate(342, 48)">
-                    <rect x="0" y="0" width="76" height="58" fill={config.centralAmenity.bg} stroke={config.centralAmenity.stroke} strokeWidth="1.5" rx="6" />
-                    <text x="38" y="20" fill={config.centralAmenity.textFill} fontSize="11" textAnchor="middle">{config.centralAmenity.emoji}</text>
-                    <text x="38" y="34" fill={config.centralAmenity.textFill} fontSize="7.5" textAnchor="middle" fontWeight="800">{config.centralAmenity.title}</text>
-                    <text x="38" y="45" fill={config.centralAmenity.textFill} fontSize="7" textAnchor="middle" fontWeight="700">{config.centralAmenity.subtitle}</text>
-                  </g>
-
-                  {/* ── Central Plaza Zone (Row 2) ── */}
-                  <g transform="translate(342, 148)">
-                    <rect x="0" y="0" width="76" height="58" fill={config.centralPlaza.bg} stroke={config.centralPlaza.stroke} strokeWidth="1.5" rx="6" />
-                    <text x="38" y="20" fill={config.centralPlaza.textFill} fontSize="11" textAnchor="middle">{config.centralPlaza.emoji}</text>
-                    <text x="38" y="34" fill={config.centralPlaza.textFill} fontSize="7.5" textAnchor="middle" fontWeight="800">{config.centralPlaza.title}</text>
-                    <text x="38" y="45" fill={config.centralPlaza.textFill} fontSize="7" textAnchor="middle" fontWeight="700">{config.centralPlaza.subtitle}</text>
-                  </g>
-
-                  {/* ── Utility Yard (Row 3 Right) ── */}
-                  <g transform="translate(680, 250)">
-                    <rect x="0" y="0" width="64" height="52" fill={config.utilityYard.bg} stroke={config.utilityYard.stroke} strokeWidth="1.2" rx="4" />
-                    <text x="32" y="18" fill={config.utilityYard.textFill} fontSize="10" textAnchor="middle">{config.utilityYard.emoji}</text>
-                    <text x="32" y="31" fill={config.utilityYard.textFill} fontSize="7" textAnchor="middle" fontWeight="700">{config.utilityYard.title}</text>
-                    <text x="32" y="42" fill={config.utilityYard.textFill} fontSize="6" textAnchor="middle">{config.utilityYard.subtitle}</text>
-                  </g>
-
-                  {/* ── Plots Rendering ── */}
-                  {plots.map(p => {
-                    const isSelected = selected?.id === p.id;
-                    const isFilteredOut =
-                      (statusFilter !== 'all' && p.status !== statusFilter) ||
-                      (sectorFilter !== 'all' && p.sector !== sectorFilter) ||
-                      (facingFilter !== 'all' && p.facing !== facingFilter) ||
-                      (cornerOnly && !p.corner) ||
-                      (searchQuery.trim() && !p.label.toLowerCase().includes(searchQuery.toLowerCase().replace('#', '').trim()));
-
-                    return (
-                      <g
-                        key={p.id}
-                        className="plot-cell"
-                        onClick={() => setSelected(p)}
-                        role="button"
-                        aria-label={`Plot ${p.label} – ${p.status} – ${p.area} Sq.Yds`}
-                        tabIndex={0}
-                        onKeyDown={e => e.key === 'Enter' && setSelected(p)}
-                        opacity={isFilteredOut ? 0.18 : 1}
-                      >
-                        {/* Glow indicator for selected plot */}
-                        {isSelected && (
-                          <rect
-                            x={p.x - 3}
-                            y={p.y - 3}
-                            width={p.w + 6}
-                            height={p.h + 6}
-                            fill="none"
-                            stroke="var(--brand-gold)"
-                            strokeWidth="2.5"
-                            rx="6"
-                            strokeDasharray="4 2"
-                          />
-                        )}
-
-                        {/* Plot Base Box */}
-                        <rect
-                          x={p.x}
-                          y={p.y}
-                          width={p.w}
-                          height={p.h}
-                          fill={`${STATUS_COLORS[p.status]}28`}
-                          stroke={isSelected ? '#ffffff' : STATUS_COLORS[p.status]}
-                          strokeWidth={isSelected ? 2.5 : 1.5}
-                          rx="4"
-                        />
-
-                        {/* Plot Number */}
-                        <text
-                          x={p.x + p.w / 2}
-                          y={p.y + p.h / 2 - 7}
-                          fill={isSelected ? '#ffffff' : STATUS_COLORS[p.status]}
-                          fontSize="10"
-                          textAnchor="middle"
-                          fontWeight="800"
-                          fontFamily="Inter"
-                        >
-                          {p.label}
-                        </text>
-
-                        {/* Area in Sq.Yds */}
-                        <text
-                          className="plot-cell-area"
-                          x={p.x + p.w / 2}
-                          y={p.y + p.h / 2 + 6}
-                          fill="rgba(255,255,255,0.75)"
-                          fontSize="7.5"
-                          textAnchor="middle"
-                          fontFamily="Inter"
-                          fontWeight="600"
-                        >
-                          {p.area} Yd
-                        </text>
-
-                        {/* Dimensions sub-text */}
-                        <text
-                          x={p.x + p.w / 2}
-                          y={p.y + p.h / 2 + 16}
-                          fill="rgba(255,255,255,0.4)"
-                          fontSize="6"
-                          textAnchor="middle"
-                          fontFamily="Inter"
-                        >
-                          {p.facing[0]}·{p.dimensions.split(' ')[0]}
-                        </text>
-
-                        {/* Corner plot star */}
-                        {p.corner && (
-                          <text
-                            x={p.x + p.w - 4}
-                            y={p.y + 11}
-                            fill="#f59e0b"
-                            fontSize="8"
-                            textAnchor="end"
-                          >
-                            ⭐
-                          </text>
-                        )}
-                      </g>
-                    );
-                  })}
-
-                  {/* Compass / North Arrow */}
-                  <g transform="translate(710, 36)" className="plot-north-arrow">
-                    <circle r="14" fill="rgba(0,0,0,0.7)" stroke="rgba(200,134,10,0.5)" strokeWidth="1.5" />
-                    <text x="0" y="5" fill="var(--brand-gold)" fontSize="12" textAnchor="middle" fontWeight="800" fontFamily="Inter">
-                      N
-                    </text>
-                  </g>
-                </svg>
+              {/* Authentic Blueprint Specification Strip */}
+              <div className="pm-layout-specs-strip">
+                <div className="pm-lstrip-item">
+                  <span className="pm-lstrip-label">Official Sanction</span>
+                  <strong className="pm-lstrip-val">{project.approvalDetails}</strong>
+                </div>
+                <div className="pm-lstrip-item">
+                  <span className="pm-lstrip-label">Sanctioned Plots</span>
+                  <strong className="pm-lstrip-val">Plots #1 to #61 Clearly Numbered</strong>
+                </div>
+                <div className="pm-lstrip-item">
+                  <span className="pm-lstrip-label">Road Network</span>
+                  <strong className="pm-lstrip-val">100' Approach · 40' Avenues · 33' & 30' Roads</strong>
+                </div>
+                <div className="pm-lstrip-item">
+                  <span className="pm-lstrip-label">Open Spaces & Parks</span>
+                  <strong className="pm-lstrip-val">Central Gazebo Park · Children Play Arena</strong>
+                </div>
               </div>
             </div>
-          ) : (
-            /* ── Plot Directory Table View ── */
-            <div className="pm-table-container">
-              <table className="pm-plot-table">
-                <thead>
-                  <tr>
-                    <th>Plot #</th>
-                    <th>Sector</th>
-                    <th>Area (Sq.Yds)</th>
-                    <th>Dimensions</th>
-                    <th>Facing</th>
-                    <th>Road Width</th>
-                    <th>Corner</th>
-                    <th>Total Price</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPlots.map(p => (
-                    <tr
-                      key={p.id}
-                      style={{
-                        background: selected?.id === p.id ? 'rgba(200, 134, 10, 0.12)' : 'transparent',
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => setSelected(p)}
-                    >
-                      <td><strong>#{p.label}</strong></td>
-                      <td>{p.sector}</td>
-                      <td><strong>{p.area} Sq.Yds</strong> <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>({p.sqft} sft)</span></td>
-                      <td>{p.dimensions}</td>
-                      <td>{p.facing}</td>
-                      <td>{p.road}</td>
-                      <td>{p.corner ? '⭐ Yes' : '—'}</td>
-                      <td><strong style={{ color: 'var(--brand-gold)' }}>₹{p.price} Lakhs</strong></td>
-                      <td>
-                        <span
-                          style={{
-                            background: `${STATUS_COLORS[p.status]}22`,
-                            color: STATUS_COLORS[p.status],
-                            border: `1px solid ${STATUS_COLORS[p.status]}55`,
-                            padding: '2px 8px',
-                            borderRadius: '12px',
-                            fontSize: '0.7rem',
-                            fontWeight: 700,
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {STATUS_LABELS[p.status]}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          className="btn btn-ghost btn-sm"
-                          style={{ padding: '4px 8px', fontSize: '0.75rem' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelected(p);
-                            setViewMode('map');
-                          }}
-                        >
-                          View Map
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
         </div>
 
         {/* ── 4. Right Area: Live Plot Inspector Card ─────────────────────────── */}
@@ -2060,7 +2346,7 @@ function LocationPage({ onOpenVisit }) {
           </div>
         </div>
 
-        <div className="pm-map-placeholder" aria-label="Location map visual" style={{ backgroundImage: `url('/images/plotmark-hero-aerial.jpg')`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
+        <div className="pm-map-placeholder" aria-label="Location map visual" style={{ backgroundImage: `url('/images/actual-site-layout.png')`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative' }}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(10, 8, 4, 0.75)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, textAlign: 'center' }}>
             <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>📍</div>
             <h4 style={{ color: '#ffffff', fontSize: '1.25rem', fontWeight: 800, margin: 0 }}>
@@ -2091,12 +2377,48 @@ function GalleryPage() {
   const [cat, setCat] = useState('all');
 
   const photos = [
-    { src: '/images/plotmark-hero-aerial.jpg', label: 'Aerial View of Plotted Layout', cat: 'aerial', type: 'Site Photography' },
-    { src: '/images/plotmark-avenue-layout.jpg', label: '40 Ft Main Avenue Blacktop Road', cat: 'roads', type: 'Actual Road Work' },
-    { src: '/images/plotmark-entrance-arch.jpg', label: 'Grand Gated Entrance Archway', cat: 'gate', type: 'Completed Entrance' },
-    { src: '/images/plotmark-hero-aerial.jpg', label: 'Central Community Park & Gazebo', cat: 'park', type: 'Landscape Work' },
-    { src: '/images/plotmark-avenue-layout.jpg', label: 'Underground Utilities & Kerb Stones', cat: 'roads', type: 'Infrastructure' },
-    { src: '/images/plotmark-entrance-arch.jpg', label: 'Security Post & Boom Barrier', cat: 'gate', type: 'Security Setup' },
+    {
+      src: '/images/plot-clubhouse-pool.jpg',
+      label: 'Grand Resort Clubhouse & Swimming Pool',
+      cat: 'amenities',
+      type: 'Completed Amenity',
+      desc: 'Finished Olympic-size swimming pool with luxury deck loungers and designer clubhouse facade.',
+    },
+    {
+      src: '/images/plot-infra-work.jpg',
+      label: '40 Ft Main Avenue BT Road Work & Kerbs',
+      cat: 'infra',
+      type: 'Site Development',
+      desc: 'Active site infrastructure laying with heavy-duty asphalt paving, kerbstones, and demarcation pillars.',
+    },
+    {
+      src: '/images/plotmark-entrance-arch.jpg',
+      label: 'Signature Grand Entrance Archway & RFID Gate',
+      cat: 'gate',
+      type: 'Security Portal',
+      desc: 'Monumental 60-ft wide entrance arch with 24x7 security cabin, CCTV, and automated boom barrier.',
+    },
+    {
+      src: '/images/actual-site-layout.png',
+      label: 'Verified Cadastral Survey & Master Layout Blueprint',
+      cat: 'plans',
+      type: 'Sanctioned Blueprint',
+      desc: 'Official HMDA/DTCP sanctioned layout grid displaying individual numbered plots and green buffers.',
+    },
+    {
+      src: '/images/plotventure-avenue.jpg',
+      label: 'Tree-Lined 60-Ft Avenue & LED Streetlights',
+      cat: 'infra',
+      type: 'Avenue Plantation',
+      desc: 'Finished internal boulevard featuring lush flowering avenue trees, walkways, and underground electrical lines.',
+    },
+    {
+      src: '/images/plotmark-masterplan.jpg',
+      label: 'Bird’s Eye 3D Architectural Township Masterplan',
+      cat: 'plans',
+      type: 'Architectural Render',
+      desc: 'High-resolution 3D masterplan rendering showing central parks, recreational zones, and commercial strips.',
+    },
   ];
 
   const filtered = cat === 'all' ? photos : photos.filter(p => p.cat === cat);
@@ -2108,24 +2430,25 @@ function GalleryPage() {
           <div style={{ maxWidth: 800, width: '100%', position: 'relative' }} onClick={e => e.stopPropagation()}>
             <button className="plot-modal__close" onClick={() => setSelectedImg(null)}>×</button>
             <img src={selectedImg.src} alt={selectedImg.label} style={{ width: '100%', borderRadius: 'var(--radius-lg)' }} />
-            <div style={{ marginTop: 8, color: '#ffffff', fontWeight: 600 }}>{selectedImg.label}</div>
+            <div style={{ marginTop: 12, color: '#ffffff', fontWeight: 700, fontSize: '1.1rem' }}>{selectedImg.label}</div>
+            <div style={{ marginTop: 4, color: 'var(--brand-gold)', fontSize: '0.85rem' }}>{selectedImg.desc}</div>
           </div>
         </div>
       )}
 
       <h1 className="pm-section__title">Project Gallery</h1>
       <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-6)' }}>
-        Authentic site photographs and drone perspectives showing real development progress.
+        Authentic site photography, completed township infrastructure, and architectural layouts.
       </p>
 
       {/* Category chips */}
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
         {[
-          ['all', 'All Photos'],
-          ['aerial', 'Drone Aerial Views'],
-          ['roads', 'Avenue Roads & Kerbs'],
-          ['gate', 'Entrance Gate & Arch'],
-          ['park', 'Parks & Landscaping'],
+          ['all', 'All Photos (6)'],
+          ['amenities', 'Clubhouse & Pool'],
+          ['infra', 'Avenue Roads & Kerbs'],
+          ['gate', 'Entrance Gateways'],
+          ['plans', 'Layout Plans & Blueprint'],
         ].map(([key, label]) => (
           <button
             key={key}
@@ -2148,11 +2471,16 @@ function GalleryPage() {
             <div style={{ height: 220, overflow: 'hidden' }}>
               <img src={p.src} alt={p.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
-            <div style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{p.label}</span>
-              <span style={{ fontSize: '0.6875rem', color: 'var(--brand-gold)', textTransform: 'uppercase' }}>
-                {p.type}
-              </span>
+            <div style={{ padding: '14px 16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>{p.label}</span>
+                <span style={{ fontSize: '0.6875rem', color: 'var(--brand-gold)', fontWeight: 700, textTransform: 'uppercase' }}>
+                  {p.type}
+                </span>
+              </div>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                {p.desc}
+              </p>
             </div>
           </div>
         ))}
@@ -2162,44 +2490,390 @@ function GalleryPage() {
 }
 
 // ─── Contact / Site Visit Page ────────────────────────────────────────────────
-function ContactPage({ onOpenVisit }) {
+function ContactPage({ onOpenVisit, initialProject, onSelectProject, setActivePage }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    project: initialProject?.id || 'pm-shankarpally',
+    plotSize: '150 – 200 Sq.Yds',
+    visitDate: '',
+    message: '',
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [openFaq, setOpenFaq] = useState(0);
+
+  const selectedProj = useMemo(() => {
+    return PLOT_PROJECTS.find(p => p.id === formData.project) || PLOT_PROJECTS[0];
+  }, [formData.project]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name.trim() || !formData.phone.trim()) return;
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setSubmitted(true);
+    }, 500);
+  };
+
+  const handleResetForm = () => {
+    setFormData({
+      name: '',
+      phone: '',
+      email: '',
+      project: initialProject?.id || 'pm-shankarpally',
+      plotSize: '150 – 200 Sq.Yds',
+      visitDate: '',
+      message: '',
+    });
+    setSubmitted(false);
+  };
+
+  const FAQS = [
+    {
+      q: 'How does the free site visit pickup and drop service work?',
+      a: 'We provide complimentary doorstep air-conditioned cab pickup and drop from anywhere in Hyderabad (Home or Office) for you and your family. Our dedicated executive coordinates timing, handles travel, and guides you on-site through the layout without any obligation.',
+    },
+    {
+      q: 'Are all PlotMark layouts 100% HMDA/DTCP approved and RERA registered?',
+      a: 'Yes, absolutely. Every project showcased on PlotMark has received final technical sanction (HMDA/DTCP LP Number) and valid TS-RERA registration. Legal title documents, link documents, and sanction orders are open for verification before token booking.',
+    },
+    {
+      q: 'What bank loan options are available for open plots in PlotMark?',
+      a: 'All our projects are pre-approved for up to 70%–75% plot purchase loans and composite plot+construction loans by top nationalised and private banks including SBI, HDFC Bank, ICICI Bank, Axis Bank, and LIC Housing Finance.',
+    },
+    {
+      q: 'What township amenities and infrastructure are included?',
+      a: 'All townships feature 100% underground cabling, blacktop 40ft/33ft BT avenue roads with kerb stones, dedicated underground drainage and storm water lines, overhead water tanks with individual plot tap points, compound walls with 24/7 security, designer clubhouse, and lush parks.',
+    },
+    {
+      q: 'Can I choose my plot number and make a token reservation online?',
+      a: 'Yes! You can explore the Interactive Layout Map, filter available East/West/Corner plots, view dimensions and exact facing, and place an instant token booking with spot registration assistance at the Sub-Registrar Office.',
+    },
+  ];
+
+  const waLeadUrl = `https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+    `Hi PlotMark! I would like to schedule a site visit for ${selectedProj.name} (${selectedProj.location}) for ${formData.plotSize}. Name: ${formData.name || 'Investor'}.`
+  )}`;
+
   return (
-    <div className="pm-section container" style={{ maxWidth: 680 }}>
-      <h1 className="pm-section__title" style={{ textAlign: 'center' }}>Book Your Free Site Visit</h1>
-      <p style={{ color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 'var(--space-8)' }}>
-        Experience the layout in person. We provide complimentary pickup and drop from your location in Hyderabad.
-      </p>
+    <div className="pm-contact-page">
+      {/* ── Page Header ── */}
+      <div className="pm-contact-hero">
+        <span className="badge" style={{ marginBottom: '0.75rem', background: 'rgba(200,134,10,0.15)', color: 'var(--brand-gold)' }}>
+          🏷️ Direct Developer Desk &amp; Site Visit Assistance
+        </span>
+        <h1 className="pm-contact-title">
+          Contact Us &amp; Schedule Site Visit
+        </h1>
+        <p className="pm-contact-sub">
+          Have queries about plot dimensions, current pricing, or RERA approvals? Connect directly with our plotted township advisors or schedule a free cab pickup across Hyderabad.
+        </p>
+      </div>
 
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 'var(--space-8)' }}>
-        <button
-          className="btn btn-primary btn-lg"
-          style={{ width: '100%', justifyContent: 'center', marginBottom: 'var(--space-4)' }}
-          onClick={() => onOpenVisit(PLOT_PROJECTS[0])}
-        >
-          🚗 Schedule Site Visit with Free Cab
-        </button>
+      <div className="container pm-contact-container">
+        <div className="pm-contact-grid">
+          {/* ── Left Column: Form Card ── */}
+          <div className="pm-contact-card pm-contact-form-card">
+            <div className="pm-contact-card-header">
+              <h2 style={{ fontSize: '1.35rem', margin: '0 0 6px', fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
+                {submitted ? 'Booking Request Confirmed' : 'Book a Complimentary Site Visit'}
+              </h2>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                {submitted
+                  ? 'Our relationship manager will contact you within 15 minutes.'
+                  : 'Free AC cab pickup & drop from your doorstep across Hyderabad.'}
+              </p>
+            </div>
 
-        <div style={{ textAlign: 'center', margin: 'var(--space-4) 0', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
-          — OR CONNECT DIRECTLY VIA WHATSAPP —
+            {submitted ? (
+              <div className="pm-contact-success-box">
+                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>✅</div>
+                <h3 style={{ fontSize: '1.25rem', color: '#10b981', margin: '0 0 8px' }}>
+                  Request Received, {formData.name}!
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.6', marginBottom: '1.25rem' }}>
+                  Your site visit enquiry for <strong>{selectedProj.name}</strong> ({selectedProj.location}) has been logged in our priority queue.
+                </p>
+
+                <div className="pm-contact-success-details">
+                  <div><span>Project:</span> <strong>{selectedProj.name}</strong></div>
+                  <div><span>Phone:</span> <strong>{formData.phone}</strong></div>
+                  <div><span>Preferred Size:</span> <strong>{formData.plotSize}</strong></div>
+                  {formData.visitDate && <div><span>Visit Date:</span> <strong>{formData.visitDate}</strong></div>}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '1.5rem' }}>
+                  <a
+                    href={waLeadUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-whatsapp"
+                    style={{ justifyContent: 'center', width: '100%', padding: '12px' }}
+                  >
+                    <span>💬</span> Confirm Pickup on WhatsApp Immediately
+                  </a>
+
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={handleResetForm}
+                    style={{ justifyContent: 'center', width: '100%' }}
+                  >
+                    Book Another Visit / Submit Another Query
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="pm-contact-form">
+                <div className="pm-form-row-2">
+                  <div className="pm-form-group">
+                    <label htmlFor="pm-ct-name">Full Name *</label>
+                    <input
+                      id="pm-ct-name"
+                      type="text"
+                      required
+                      placeholder="e.g. Ramesh Kumar"
+                      className="pm-input"
+                      value={formData.name}
+                      onChange={e => setFormData({ ...formData, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="pm-form-group">
+                    <label htmlFor="pm-ct-phone">Mobile / WhatsApp Number *</label>
+                    <input
+                      id="pm-ct-phone"
+                      type="tel"
+                      required
+                      placeholder="10-digit mobile number"
+                      className="pm-input"
+                      value={formData.phone}
+                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="pm-form-row-2">
+                  <div className="pm-form-group">
+                    <label htmlFor="pm-ct-email">Email Address (Optional)</label>
+                    <input
+                      id="pm-ct-email"
+                      type="email"
+                      placeholder="ramesh@example.com"
+                      className="pm-input"
+                      value={formData.email}
+                      onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    />
+                  </div>
+                  <div className="pm-form-group">
+                    <label htmlFor="pm-ct-project">Select Plotted Township *</label>
+                    <select
+                      id="pm-ct-project"
+                      className="pm-select"
+                      value={formData.project}
+                      onChange={e => setFormData({ ...formData, project: e.target.value })}
+                    >
+                      {PLOT_PROJECTS.map(proj => (
+                        <option key={proj.id} value={proj.id}>
+                          {proj.name} — {proj.location} (from {proj.price})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pm-form-row-2">
+                  <div className="pm-form-group">
+                    <label htmlFor="pm-ct-size">Preferred Plot Size</label>
+                    <select
+                      id="pm-ct-size"
+                      className="pm-select"
+                      value={formData.plotSize}
+                      onChange={e => setFormData({ ...formData, plotSize: e.target.value })}
+                    >
+                      <option value="150 – 200 Sq.Yds">150 – 200 Sq.Yds (Standard Villa Plot)</option>
+                      <option value="200 – 300 Sq.Yds">200 – 300 Sq.Yds (Premium Residential)</option>
+                      <option value="300 – 500 Sq.Yds">300 – 500 Sq.Yds (Grand Luxury Estate)</option>
+                      <option value="500+ Sq.Yds">500+ Sq.Yds (Corner / Commercial Road)</option>
+                    </select>
+                  </div>
+                  <div className="pm-form-group">
+                    <label htmlFor="pm-ct-date">Preferred Site Visit Date</label>
+                    <input
+                      id="pm-ct-date"
+                      type="date"
+                      className="pm-input"
+                      value={formData.visitDate}
+                      onChange={e => setFormData({ ...formData, visitDate: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="pm-form-group">
+                  <label htmlFor="pm-ct-message">Specific Requirements / Notes</label>
+                  <textarea
+                    id="pm-ct-message"
+                    rows="3"
+                    className="pm-textarea"
+                    placeholder="Tell us if you prefer East/North facing, corner plots, bank loan pre-check, or need pickup from a specific Hyderabad location..."
+                    value={formData.message}
+                    onChange={e => setFormData({ ...formData, message: e.target.value })}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn btn-primary btn-lg"
+                  style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
+                >
+                  {loading ? 'Submitting Request...' : '🚗 Request Free Site Visit Cab →'}
+                </button>
+
+                <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  🔒 No spam guarantee. Your contact details are kept strictly confidential under TS-RERA privacy standards.
+                </div>
+              </form>
+            )}
+          </div>
+
+          {/* ── Right Column: Info Cards ── */}
+          <div className="pm-contact-info-col">
+            {/* Sales Hotlines */}
+            <div className="pm-contact-side-card">
+              <h3 className="pm-side-card-title">
+                📞 Direct Developer Hotlines
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 1rem' }}>
+                Instant assistance for plot availability, pricing sheets, and master layout verification.
+              </p>
+
+              <div className="pm-contact-contact-row">
+                <span className="pm-contact-icon-badge">📞</span>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sales Desk (Direct):</div>
+                  <a href={`tel:${siteConfig.phone}`} style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    {siteConfig.phone}
+                  </a>
+                </div>
+              </div>
+
+              <div className="pm-contact-contact-row">
+                <span className="pm-contact-icon-badge" style={{ background: 'rgba(37,211,102,0.15)', color: '#25D366' }}>💬</span>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>WhatsApp Instant Desk:</div>
+                  <a href={`https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" style={{ fontSize: '1.15rem', fontWeight: 700, color: '#25D366' }}>
+                    {siteConfig.whatsapp}
+                  </a>
+                </div>
+              </div>
+
+              <div className="pm-contact-contact-row">
+                <span className="pm-contact-icon-badge">✉️</span>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Email Assistance:</div>
+                  <a href={`mailto:${siteConfig.email}`} style={{ fontSize: '0.9rem', color: 'var(--brand-gold)' }}>
+                    {siteConfig.email}
+                  </a>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '1.25rem' }}>
+                <a
+                  href={`https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                    "Hello! I am looking for residential plots in Hyderabad through PlotMark. Please share current availability."
+                  )}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-whatsapp"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  <span>💬</span> WhatsApp Live Chat
+                </a>
+              </div>
+            </div>
+
+            {/* Corporate & Site Offices */}
+            <div className="pm-contact-side-card">
+              <h3 className="pm-side-card-title">
+                🏢 Registered Office &amp; Cab Hub
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', margin: '0 0 0.85rem' }}>
+                <strong>Central Office:</strong> {siteConfig.registeredOffice.fullAddress}
+              </p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.6', margin: '0 0 0.85rem' }}>
+                <strong>Doorstep Cab Pickups:</strong> Complimentary pickup hubs cover Gachibowli, Financial District, Miyapur, Kukatpally, Secunderabad, LB Nagar, and Shamshabad.
+              </p>
+              <div style={{ fontSize: '0.8rem', color: 'var(--brand-gold)', fontWeight: 600 }}>
+                🕒 Office &amp; Site Visits: 9:00 AM – 7:30 PM (All 7 Days Open)
+              </div>
+            </div>
+
+            {/* Legal & Banking Trust Badges */}
+            <div className="pm-contact-side-card" style={{ borderColor: 'rgba(200,134,10,0.35)', background: 'rgba(200,134,10,0.04)' }}>
+              <h3 className="pm-side-card-title" style={{ color: 'var(--brand-gold)' }}>
+                🛡️ 100% Legal &amp; Bank Loan Guarantee
+              </h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: '#10b981', fontWeight: 700 }}>✓</span>
+                  <span>100% HMDA / DTCP Final LP Sanctioned Numbers</span>
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: '#10b981', fontWeight: 700 }}>✓</span>
+                  <span>Valid TS-RERA Registered Townships</span>
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: '#10b981', fontWeight: 700 }}>✓</span>
+                  <span>Clear Marketable Title &amp; Immediate Spot Registration</span>
+                </li>
+                <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ color: '#10b981', fontWeight: 700 }}>✓</span>
+                  <span>Pre-Sanctioned Loans from SBI, HDFC, ICICI &amp; LIC HFL</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
 
-        <a
-          href={`https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
-            "Hi! I want to visit PlotMark open plots this week. Please share available slots."
-          )}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-whatsapp btn-lg"
-          style={{ width: '100%', justifyContent: 'center' }}
-        >
-          💬 Chat with Sales Advisor on WhatsApp
-        </a>
+        {/* ── FAQ Section ── */}
+        <div className="pm-contact-faq-section">
+          <div style={{ textAlign: 'center', maxWidth: 680, margin: '0 auto 2.5rem' }}>
+            <span className="badge" style={{ marginBottom: '0.5rem', background: 'rgba(200,134,10,0.15)', color: 'var(--brand-gold)' }}>
+              Got Questions?
+            </span>
+            <h2 style={{ fontSize: '1.75rem', margin: '0.25rem 0 0.5rem', fontFamily: 'var(--font-display)' }}>
+              Frequently Asked Questions
+            </h2>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
+              Everything you need to know about booking site visits, approvals, and plot registrations with PlotMark.
+            </p>
+          </div>
 
-        <div style={{ marginTop: 'var(--space-6)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
-          <div>📞 Direct Call: <strong>{siteConfig.phone}</strong></div>
-          <div>✉️ Email: <strong>info@deccanidentity.com</strong></div>
-          <div>🕒 Hours: <strong>9:00 AM – 7:00 PM (All 7 Days)</strong></div>
-          <div>📍 Office: <strong>Banjara Hills, Hyderabad</strong></div>
+          <div className="pm-faq-list">
+            {FAQS.map((faq, idx) => (
+              <div key={idx} className={`pm-faq-item ${openFaq === idx ? 'open' : ''}`}>
+                <button
+                  type="button"
+                  className="pm-faq-question"
+                  onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}
+                  aria-expanded={openFaq === idx}
+                >
+                  <span>{faq.q}</span>
+                  <span className="pm-faq-icon">{openFaq === idx ? '−' : '+'}</span>
+                </button>
+                {openFaq === idx && (
+                  <div className="pm-faq-answer">
+                    <p style={{ margin: 0, lineHeight: '1.65', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                      {faq.a}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -2208,15 +2882,80 @@ function ContactPage({ onOpenVisit }) {
 
 // ─── Main PlotMark Component ──────────────────────────────────────────────────
 export default function PlotMarkDemo() {
-  const [activePage, setActivePage] = useState('home');
+  const [activePage, setActivePage] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search).get('page');
+      if (p) {
+        if (p === 'amenities' || p === 'location') return 'highlights';
+        return p;
+      }
+    }
+    return 'home';
+  });
   const [selectedProject, setSelectedProject] = useState(PLOT_PROJECTS[0]);
+  const [projectStageFilter, setProjectStageFilter] = useState('all');
+  const [navDropdownOpen, setNavDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navDropdownRef = useRef(null);
+  const dropdownCloseTimeoutRef = useRef(null);
+
+  const handleDropdownEnter = () => {
+    if (dropdownCloseTimeoutRef.current) {
+      clearTimeout(dropdownCloseTimeoutRef.current);
+      dropdownCloseTimeoutRef.current = null;
+    }
+    setNavDropdownOpen(true);
+  };
+
+  const handleDropdownLeave = () => {
+    if (dropdownCloseTimeoutRef.current) {
+      clearTimeout(dropdownCloseTimeoutRef.current);
+    }
+    dropdownCloseTimeoutRef.current = setTimeout(() => {
+      setNavDropdownOpen(false);
+    }, 200);
+  };
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (navDropdownRef.current && !navDropdownRef.current.contains(e.target)) {
+        if (dropdownCloseTimeoutRef.current) {
+          clearTimeout(dropdownCloseTimeoutRef.current);
+          dropdownCloseTimeoutRef.current = null;
+        }
+        setNavDropdownOpen(false);
+      }
+    }
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') {
+        if (dropdownCloseTimeoutRef.current) {
+          clearTimeout(dropdownCloseTimeoutRef.current);
+          dropdownCloseTimeoutRef.current = null;
+        }
+        setNavDropdownOpen(false);
+        setMobileMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+      if (dropdownCloseTimeoutRef.current) {
+        clearTimeout(dropdownCloseTimeoutRef.current);
+      }
+    };
+  }, []);
   const [plotsByProject, setPlotsByProject] = useState(() => ({
     'pm-shankarpally': generateProjectPlots('pm-shankarpally'),
     'pm-shamshabad': generateProjectPlots('pm-shamshabad'),
     'pm-pharmacity': generateProjectPlots('pm-pharmacity'),
     'pm-ghatkesar': generateProjectPlots('pm-ghatkesar'),
+    'pm-kollur': generateProjectPlots('pm-kollur'),
+    'pm-sadashivpet': generateProjectPlots('pm-sadashivpet'),
   }));
   const [brochureProject, setBrochureProject] = useState(null);
+  const [showBrochuresListModal, setShowBrochuresListModal] = useState(false);
   const [visitProject, setVisitProject] = useState(null);
   const [visitDefaultPlot, setVisitDefaultPlot] = useState(null);
   const [showAdmin, setShowAdmin] = useState(false);
@@ -2262,12 +3001,11 @@ export default function PlotMarkDemo() {
 
   const PAGES = [
     { id: 'home', label: 'Home' },
-    { id: 'projects', label: 'Open Plot Projects' },
+    { id: 'projects', label: 'Open Plots' },
     { id: 'layout', label: 'Layout Map' },
-    { id: 'amenities', label: 'Amenities' },
-    { id: 'location', label: 'Location' },
+    { id: 'highlights', label: 'Highlights' },
     { id: 'gallery', label: 'Gallery' },
-    { id: 'contact', label: 'Book Site Visit' },
+    { id: 'contact', label: 'Contact Us' },
   ];
 
   return (
@@ -2290,31 +3028,420 @@ export default function PlotMarkDemo() {
         </div>
 
         <ul className="pm-nav__links">
-          {PAGES.map(p => (
-            <li key={p.id}>
-              <button
-                className={activePage === p.id ? 'active' : ''}
-                onClick={() => {
-                  setActivePage(p.id);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                aria-current={activePage === p.id ? 'page' : undefined}
-              >
-                {p.label}
-              </button>
-            </li>
-          ))}
+          {PAGES.map(p => {
+            if (p.id === 'projects') {
+              return (
+                <li
+                  key={p.id}
+                  ref={navDropdownRef}
+                  className="pm-nav__item-dropdown"
+                  onMouseEnter={handleDropdownEnter}
+                  onMouseLeave={handleDropdownLeave}
+                >
+                  <button
+                    className={`pm-nav__dropdown-trigger ${activePage === 'projects' ? 'active' : ''}`}
+                    onClick={() => {
+                      if (dropdownCloseTimeoutRef.current) {
+                        clearTimeout(dropdownCloseTimeoutRef.current);
+                        dropdownCloseTimeoutRef.current = null;
+                      }
+                      setProjectStageFilter('all');
+                      setActivePage('projects');
+                      setNavDropdownOpen(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    aria-expanded={navDropdownOpen}
+                    aria-haspopup="true"
+                  >
+                    <span>{p.label}</span>
+                    <span className={`pm-nav__caret ${navDropdownOpen ? 'open' : ''}`}>▾</span>
+                  </button>
+
+                  {/* Dropdown Menu for Open Plot Projects: Ongoing, Completed, Upcoming */}
+                  <div
+                    className={`pm-nav__dropdown-menu ${navDropdownOpen ? 'show' : ''}`}
+                    role="menu"
+                    onMouseEnter={handleDropdownEnter}
+                    onMouseLeave={handleDropdownLeave}
+                  >
+                    <div className="pm-nav__dropdown-header">
+                      <span className="pm-nav__dropdown-title">Explore by Project Status</span>
+                      <span className="pm-nav__dropdown-sub">6 Masterplanned Townships</span>
+                    </div>
+
+                    <div className="pm-nav__dropdown-items">
+                      <button
+                        className={`pm-nav__dropdown-item ${activePage === 'projects' && projectStageFilter === 'all' ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (dropdownCloseTimeoutRef.current) {
+                            clearTimeout(dropdownCloseTimeoutRef.current);
+                            dropdownCloseTimeoutRef.current = null;
+                          }
+                          setProjectStageFilter('all');
+                          setActivePage('projects');
+                          setNavDropdownOpen(false);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        role="menuitem"
+                      >
+                        <div className="pm-nav__item-icon">🌟</div>
+                        <div className="pm-nav__item-content">
+                          <div className="pm-nav__item-title">
+                            All Projects
+                            <span className="pm-nav__item-pill">6 Total</span>
+                          </div>
+                          <div className="pm-nav__item-desc">Browse all 6 plotted townships across Hyderabad</div>
+                        </div>
+                      </button>
+
+                      <button
+                        className={`pm-nav__dropdown-item ${activePage === 'projects' && projectStageFilter === 'ongoing' ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (dropdownCloseTimeoutRef.current) {
+                            clearTimeout(dropdownCloseTimeoutRef.current);
+                            dropdownCloseTimeoutRef.current = null;
+                          }
+                          setProjectStageFilter('ongoing');
+                          setActivePage('projects');
+                          setNavDropdownOpen(false);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        role="menuitem"
+                      >
+                        <div className="pm-nav__item-thumb">
+                          <img src="/images/plotmark-hero-aerial.jpg" alt="Ongoing Projects" />
+                          <span className="pm-nav__thumb-badge ongoing">Ongoing</span>
+                        </div>
+                        <div className="pm-nav__item-content">
+                          <div className="pm-nav__item-title">
+                            Ongoing Projects
+                            <span className="pm-nav__item-pill ongoing">2 Active</span>
+                          </div>
+                          <div className="pm-nav__item-desc">Under active development in Shankarpally & Shamshabad</div>
+                        </div>
+                      </button>
+
+                      <button
+                        className={`pm-nav__dropdown-item ${activePage === 'projects' && projectStageFilter === 'completed' ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (dropdownCloseTimeoutRef.current) {
+                            clearTimeout(dropdownCloseTimeoutRef.current);
+                            dropdownCloseTimeoutRef.current = null;
+                          }
+                          setProjectStageFilter('completed');
+                          setActivePage('projects');
+                          setNavDropdownOpen(false);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        role="menuitem"
+                      >
+                        <div className="pm-nav__item-thumb">
+                          <img src="/images/plot-completed-park.jpg" alt="Completed Projects" />
+                          <span className="pm-nav__thumb-badge completed">Delivered</span>
+                        </div>
+                        <div className="pm-nav__item-content">
+                          <div className="pm-nav__item-title">
+                            Completed Projects
+                            <span className="pm-nav__item-pill completed">2 Delivered</span>
+                          </div>
+                          <div className="pm-nav__item-desc">100% finished gated layouts ready for house construction</div>
+                        </div>
+                      </button>
+
+                      <button
+                        className={`pm-nav__dropdown-item ${activePage === 'projects' && projectStageFilter === 'upcoming' ? 'active' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (dropdownCloseTimeoutRef.current) {
+                            clearTimeout(dropdownCloseTimeoutRef.current);
+                            dropdownCloseTimeoutRef.current = null;
+                          }
+                          setProjectStageFilter('upcoming');
+                          setActivePage('projects');
+                          setNavDropdownOpen(false);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        role="menuitem"
+                      >
+                        <div className="pm-nav__item-thumb">
+                          <img src="/images/plot-upcoming-master.jpg" alt="Upcoming Projects" />
+                          <span className="pm-nav__thumb-badge upcoming">Pre-Launch</span>
+                        </div>
+                        <div className="pm-nav__item-content">
+                          <div className="pm-nav__item-title">
+                            Upcoming Projects
+                            <span className="pm-nav__item-pill upcoming">2 Pre-Launch</span>
+                          </div>
+                          <div className="pm-nav__item-desc">Inaugural investor pricing & priority token bookings</div>
+                        </div>
+                      </button>
+                    </div>
+
+                    <div
+                      className="pm-nav__dropdown-footer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (dropdownCloseTimeoutRef.current) {
+                          clearTimeout(dropdownCloseTimeoutRef.current);
+                          dropdownCloseTimeoutRef.current = null;
+                        }
+                        setProjectStageFilter('all');
+                        setActivePage('projects');
+                        setNavDropdownOpen(false);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    >
+                      <span>🚀 Pre-Launch Token Booking starting at ₹21.50 Lakhs</span>
+                      <span className="pm-nav__dropdown-link">View All →</span>
+                    </div>
+                  </div>
+                </li>
+              );
+            }
+
+            return (
+              <li key={p.id}>
+                <button
+                  className={activePage === p.id ? 'active' : ''}
+                  onClick={() => {
+                    setActivePage(p.id);
+                    setNavDropdownOpen(false);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  aria-current={activePage === p.id ? 'page' : undefined}
+                >
+                  {p.label}
+                </button>
+              </li>
+            );
+          })}
         </ul>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="pm-nav__actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm pm-nav__visit-btn"
             onClick={() => handleOpenVisit(selectedProject || PLOT_PROJECTS[0])}
+            aria-label="Book a site visit"
           >
-            🚗 Site Visit
+            🚗 Book a Visit
+          </button>
+          {/* Three Horizontal Lines Hamburger Button for Mobile & Tab */}
+          <button
+            className={`pm-nav__hamburger ${mobileMenuOpen ? 'open' : ''}`}
+            onClick={() => setMobileMenuOpen(prev => !prev)}
+            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className="pm-hamburger-bar"></span>
+            <span className="pm-hamburger-bar"></span>
+            <span className="pm-hamburger-bar"></span>
           </button>
         </div>
       </nav>
+
+      {/* Mobile & Tablet Responsive Navigation Drawer */}
+      <div
+        className={`pm-mobile-drawer-overlay ${mobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden={!mobileMenuOpen}
+      >
+        <aside
+          className="pm-mobile-drawer"
+          onClick={e => e.stopPropagation()}
+          role="dialog"
+          aria-label="Mobile Navigation Menu"
+        >
+          <div className="pm-mobile-drawer__header">
+            <div
+              className="pm-nav__logo"
+              onClick={() => {
+                setActivePage('home');
+                setMobileMenuOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              <span>🌳</span>
+              <span>PlotMark</span>
+            </div>
+            <button
+              className="pm-mobile-drawer__close"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close navigation menu"
+            >
+              ✕
+            </button>
+          </div>
+
+          <nav className="pm-mobile-drawer__nav">
+            <div className="pm-mobile-nav__group">
+              <span className="pm-mobile-nav__label">Navigation Menu</span>
+
+              <button
+                className={`pm-mobile-nav__item ${activePage === 'home' ? 'active' : ''}`}
+                onClick={() => {
+                  setActivePage('home');
+                  setMobileMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                <span className="pm-mobile-nav__icon">🏠</span>
+                <span className="pm-mobile-nav__text">Home</span>
+                {activePage === 'home' && <span className="pm-mobile-nav__dot">●</span>}
+              </button>
+
+              <div className="pm-mobile-nav__section">
+                <button
+                  className={`pm-mobile-nav__item ${activePage === 'projects' ? 'active' : ''}`}
+                  onClick={() => {
+                    setProjectStageFilter('all');
+                    setActivePage('projects');
+                    setMobileMenuOpen(false);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <span className="pm-mobile-nav__icon">🏷️</span>
+                  <span className="pm-mobile-nav__text">Open Plots</span>
+                  <span className="pm-nav__item-pill">6 Total</span>
+                </button>
+
+                <div className="pm-mobile-nav__sublinks">
+                  <button
+                    className={`pm-mobile-nav__sublink ${activePage === 'projects' && projectStageFilter === 'ongoing' ? 'active' : ''}`}
+                    onClick={() => {
+                      setProjectStageFilter('ongoing');
+                      setActivePage('projects');
+                      setMobileMenuOpen(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    <span>⚡ Ongoing Projects</span>
+                    <span className="pm-nav__thumb-badge-inline ongoing">2 Active</span>
+                  </button>
+                  <button
+                    className={`pm-mobile-nav__sublink ${activePage === 'projects' && projectStageFilter === 'completed' ? 'active' : ''}`}
+                    onClick={() => {
+                      setProjectStageFilter('completed');
+                      setActivePage('projects');
+                      setMobileMenuOpen(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    <span>✅ Completed Projects</span>
+                    <span className="pm-nav__thumb-badge-inline completed">2 Delivered</span>
+                  </button>
+                  <button
+                    className={`pm-mobile-nav__sublink ${activePage === 'projects' && projectStageFilter === 'upcoming' ? 'active' : ''}`}
+                    onClick={() => {
+                      setProjectStageFilter('upcoming');
+                      setActivePage('projects');
+                      setMobileMenuOpen(false);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    <span>🚀 Upcoming Projects</span>
+                    <span className="pm-nav__thumb-badge-inline upcoming">2 Pre-Launch</span>
+                  </button>
+                </div>
+              </div>
+
+              <button
+                className={`pm-mobile-nav__item ${activePage === 'layout' ? 'active' : ''}`}
+                onClick={() => {
+                  setActivePage('layout');
+                  setMobileMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                <span className="pm-mobile-nav__icon">🗺️</span>
+                <span className="pm-mobile-nav__text">Layout Map</span>
+                {activePage === 'layout' && <span className="pm-mobile-nav__dot">●</span>}
+              </button>
+
+              <button
+                className={`pm-mobile-nav__item ${activePage === 'highlights' ? 'active' : ''}`}
+                onClick={() => {
+                  setActivePage('highlights');
+                  setMobileMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                <span className="pm-mobile-nav__icon">✨</span>
+                <span className="pm-mobile-nav__text">Highlights</span>
+                {activePage === 'highlights' && <span className="pm-mobile-nav__dot">●</span>}
+              </button>
+
+              <button
+                className={`pm-mobile-nav__item ${activePage === 'gallery' ? 'active' : ''}`}
+                onClick={() => {
+                  setActivePage('gallery');
+                  setMobileMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                <span className="pm-mobile-nav__icon">🖼️</span>
+                <span className="pm-mobile-nav__text">Gallery</span>
+                {activePage === 'gallery' && <span className="pm-mobile-nav__dot">●</span>}
+              </button>
+
+              <button
+                className={`pm-mobile-nav__item ${activePage === 'contact' ? 'active' : ''}`}
+                onClick={() => {
+                  setActivePage('contact');
+                  setMobileMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                <span className="pm-mobile-nav__icon">📞</span>
+                <span className="pm-mobile-nav__text">Contact Us &amp; Site Visits</span>
+                {activePage === 'contact' && <span className="pm-mobile-nav__dot">●</span>}
+              </button>
+            </div>
+          </nav>
+
+          <div className="pm-mobile-drawer__footer">
+            <button
+              className="btn btn-outline pm-mobile-drawer__btn"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setShowBrochuresListModal(true);
+              }}
+            >
+              <span>📥</span>
+              <span>Download Project Brochures</span>
+            </button>
+            <button
+              className="btn btn-primary pm-mobile-drawer__btn"
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleOpenVisit(selectedProject || PLOT_PROJECTS[0]);
+              }}
+            >
+              <span>🚗</span>
+              <span>Book Free Site Visit</span>
+            </button>
+
+            <div className="pm-mobile-drawer__contact">
+              <a
+                href={`https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                  "Hello PlotMark! I would like to enquire about open plot townships."
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="pm-mobile-whatsapp-link"
+              >
+                <span>💬</span> Chat on WhatsApp
+              </a>
+              <a href={`tel:${siteConfig.phone}`} className="pm-mobile-phone" style={{ color: 'inherit', textDecoration: 'none' }}>
+                📞 {siteConfig.phone}
+              </a>
+            </div>
+          </div>
+        </aside>
+      </div>
 
       {/* Main Content Router */}
       <main className="pm-main">
@@ -2324,15 +3451,19 @@ export default function PlotMarkDemo() {
             onSelectProject={handleSelectProject}
             onOpenLayout={handleOpenLayout}
             onOpenBrochure={handleOpenBrochure}
+            onOpenBrochuresList={() => setShowBrochuresListModal(true)}
             onOpenVisit={handleOpenVisit}
             plots={currentProjectPlots}
           />
         )}
         {activePage === 'projects' && (
           <ProjectsPage
+            initialStage={projectStageFilter}
+            onStageChange={setProjectStageFilter}
             onSelectProject={handleSelectProject}
             onOpenLayout={handleOpenLayout}
             onOpenBrochure={handleOpenBrochure}
+            onOpenBrochuresList={() => setShowBrochuresListModal(true)}
             onOpenVisit={handleOpenVisit}
           />
         )}
@@ -2342,6 +3473,7 @@ export default function PlotMarkDemo() {
             onBack={() => setActivePage('projects')}
             onOpenLayout={handleOpenLayout}
             onOpenBrochure={handleOpenBrochure}
+            onOpenBrochuresList={() => setShowBrochuresListModal(true)}
             onOpenVisit={handleOpenVisit}
           />
         )}
@@ -2353,15 +3485,48 @@ export default function PlotMarkDemo() {
             onStatusChange={handleStatusChange}
             onBookVisit={handleOpenVisit}
             onOpenBrochure={handleOpenBrochure}
+            onOpenBrochuresList={() => setShowBrochuresListModal(true)}
           />
         )}
-        {activePage === 'amenities' && <AmenitiesPage onOpenVisit={handleOpenVisit} />}
-        {activePage === 'location' && <LocationPage onOpenVisit={handleOpenVisit} />}
+        {(activePage === 'highlights' || activePage === 'amenities' || activePage === 'location') && (
+          <div className="pm-highlights-merged">
+            <div style={{ textAlign: 'center', maxWidth: '720px', margin: '3rem auto 1rem', padding: '0 1rem' }}>
+              <span className="badge" style={{ marginBottom: '0.75rem' }}>
+                🌟 Amenities & Strategic Location
+              </span>
+              <h1 style={{ fontSize: 'clamp(2rem, 4vw, 2.75rem)', margin: '0.5rem 0', fontFamily: 'var(--font-display)' }}>
+                Highlights
+              </h1>
+              <p style={{ color: 'var(--text-muted)', margin: '0 auto' }}>
+                Comprehensive township infrastructure, completed clubhouse amenities, and high-yield strategic connectivity.
+              </p>
+            </div>
+            <AmenitiesPage onOpenVisit={handleOpenVisit} />
+            <LocationPage onOpenVisit={handleOpenVisit} />
+          </div>
+        )}
         {activePage === 'gallery' && <GalleryPage />}
-        {activePage === 'contact' && <ContactPage onOpenVisit={handleOpenVisit} />}
+        {activePage === 'contact' && (
+          <ContactPage
+            onOpenVisit={handleOpenVisit}
+            initialProject={selectedProject}
+            onSelectProject={handleSelectProject}
+            setActivePage={setActivePage}
+          />
+        )}
       </main>
 
       {/* Modals */}
+      {showBrochuresListModal && (
+        <BrochuresListModal
+          onClose={() => setShowBrochuresListModal(false)}
+          onViewBrochure={(proj) => {
+            setShowBrochuresListModal(false);
+            setBrochureProject(proj);
+          }}
+        />
+      )}
+
       {brochureProject && (
         <BrochureModal
           project={brochureProject}
@@ -2392,28 +3557,184 @@ export default function PlotMarkDemo() {
         />
       )}
 
-      {/* Footer */}
-      <footer className="pm-footer">
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-4)', padding: 'var(--space-6) 0' }}>
-          <div>
-            <div className="pm-nav__logo" style={{ marginBottom: 4 }}>
-              🌳 PlotMark — Plotted Developments
+      {/* ── Rich Multi-Column Footer ── */}
+      <footer className="pm-footer" role="contentinfo">
+        <div className="container pm-footer__container">
+          {/* Column 1: Brand & Overview */}
+          <div className="pm-footer__brand-col">
+            <div
+              className="pm-nav__logo"
+              onClick={() => {
+                setActivePage('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, marginBottom: '0.85rem' }}
+            >
+              <span>🌳</span>
+              <span>PlotMark — Plotted Developments</span>
             </div>
-            <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-              HMDA & RERA Approved Residential Open Plots · Hyderabad Corridors
+            <p className="pm-footer__brand-desc">
+              Hyderabad’s premier open plot &amp; gated residential township showcase. 100% verified clear marketable titles, final HMDA/DTCP technical sanctions, spot registration, and pre-approved bank loans.
+            </p>
+            <div style={{ marginTop: '1.25rem' }}>
+              <a
+                href={`https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                  "Hello PlotMark! I would like to talk to a property sales advisor regarding available plotted layouts."
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-whatsapp btn-sm"
+              >
+                <span>💬</span> Chat with Sales Advisor
+              </a>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <button
-              className="btn btn-ghost btn-sm"
-              style={{ fontSize: '0.75rem' }}
-              onClick={() => setShowAdmin(true)}
-            >
-              ⚙️ Plot Data Manager
-            </button>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Demo template by <Link to="/" style={{ color: 'var(--brand-gold)' }}>DeccanIDentity</Link>.
+
+          {/* Column 2: Quick Navigation */}
+          <div>
+            <h4 className="pm-footer__col-title">Quick Navigation</h4>
+            <ul className="pm-footer__links">
+              <li>
+                <button
+                  type="button"
+                  className="pm-footer__link"
+                  onClick={() => {
+                    setActivePage('home');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  Home
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  className="pm-footer__link"
+                  onClick={() => {
+                    setProjectStageFilter('all');
+                    setActivePage('projects');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  All Plotted Townships (6)
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  className="pm-footer__link"
+                  onClick={() => {
+                    setActivePage('layout');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  Interactive Layout Map
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  className="pm-footer__link"
+                  onClick={() => {
+                    setActivePage('highlights');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  Highlights
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  className="pm-footer__link"
+                  onClick={() => {
+                    setActivePage('gallery');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  Photo Gallery
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  className="pm-footer__link"
+                  style={{ color: 'var(--brand-gold)', fontWeight: 600 }}
+                  onClick={() => {
+                    setActivePage('contact');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  Contact Us &amp; Site Visits
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 3: Our Townships */}
+          <div>
+            <h4 className="pm-footer__col-title">Our Townships</h4>
+            <ul className="pm-footer__links">
+              {PLOT_PROJECTS.map(proj => (
+                <li key={proj.id}>
+                  <button
+                    type="button"
+                    className="pm-footer__link"
+                    onClick={() => {
+                      setSelectedProject(proj);
+                      setActivePage('project-detail');
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                  >
+                    {proj.name}
+                  </button>
+                </li>
+              ))}
+              <li>
+                <button
+                  type="button"
+                  className="pm-footer__link"
+                  style={{ color: '#10b981', fontWeight: 600 }}
+                  onClick={() => {
+                    handleOpenVisit(selectedProject || PLOT_PROJECTS[0]);
+                  }}
+                >
+                  🚗 Schedule Free Cab Visit →
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 4: Office & Sales Desk */}
+          <div>
+            <h4 className="pm-footer__col-title">Office &amp; Contacts</h4>
+            <p className="pm-footer__info-item">
+              📍 <strong>Central Office:</strong> {siteConfig.registeredOffice.fullAddress}
+            </p>
+            <p className="pm-footer__info-item">
+              📞 <strong>Sales Desk:</strong> <a href={`tel:${siteConfig.phone}`}>{siteConfig.phone}</a>
+            </p>
+            <p className="pm-footer__info-item">
+              💬 <strong>WhatsApp:</strong> <a href={`https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" style={{ color: '#25D366' }}>{siteConfig.whatsapp}</a>
+            </p>
+            <p className="pm-footer__info-item">
+              ✉️ <strong>Email:</strong> <a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a>
+            </p>
+            <div className="pm-footer__hours">
+              🕒 <strong>Timings:</strong> 9:00 AM – 7:30 PM (All 7 Days Open)
             </div>
+          </div>
+        </div>
+
+        {/* Footer Bottom Bar */}
+        <div className="container pm-footer__bottom">
+          <div className="pm-footer__copyright">
+            © 2026 <strong>PlotMark — Plotted Developments</strong>. Showcase template developed for <Link to="/" style={{ color: 'var(--brand-gold)', textDecoration: 'underline' }}>DeccanIDentity</Link>.
+          </div>
+          <div className="pm-footer__bottom-actions">
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              TS-RERA Registered &amp; Final HMDA Sanctions
+            </span>
           </div>
         </div>
       </footer>

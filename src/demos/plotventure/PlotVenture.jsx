@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import DemoBar from '../../components/DemoBar.jsx';
 import siteConfig from '../../data/site.config.js';
@@ -9,14 +9,1480 @@ import {
   GALLERY_ITEMS,
   LOCATION_HIGHLIGHTS,
   FAQS,
+  STATUS_COLORS,
+  STATUS_LABELS,
+  PV_LAYOUT_CONFIG,
+  generateVenturePlots,
 } from './plotVentureData.js';
 import './PlotVenture.css';
 
+// ─── Brochure Download Function (Direct & Unrestricted) ───────────────────────
+export function downloadProjectBrochure(project) {
+  const proj = project || PROJECTS[0];
+  const projName = proj?.name || 'Green-County-Elite';
+  const blobContent = `========================================================================
+${projName.toUpperCase()} — OFFICIAL TOWNSHIP BROCHURE & MASTERPLAN
+========================================================================
+Developer: PlotVenture Plotted Developments (DeccanIDentity Real Estate)
+Corridor: ${proj?.location || 'Hyderabad Growth Corridor'}
+Government Approval: ${proj?.approvalDetails || proj?.approval || 'HMDA & RERA Approved'}
+Project Category: ${proj?.category || 'Gated Layouts'}
+Project Stage: ${proj?.stageLabel || 'Ongoing Development'}
+Total Township Area: ${proj?.totalAcres || '42 Acres'}
+Plot Size Range: ${proj?.plotSizes || '165 – 400 Sq.Yds'}
+Starting Price: ${proj?.minPrice || '₹32 Lakhs*'} (Rate: ₹${(proj?.ratePerSqYd || 19500).toLocaleString('en-IN')}/Sq.Yd)
+Live Availability: ${proj?.availablePlots || 'Available'} Sanctioned Plots Ready for Registration
+
+------------------------------------------------------------------------
+1. PROJECT HIGHLIGHTS & TOWNSHIP SPECIFICATIONS
+------------------------------------------------------------------------
+${(proj?.highlights || [
+  '100% Vaastu Compliant Layout',
+  '40-ft & 30-ft Wide Blacktop Roads with Kerb Stones',
+  'Underground Electrical Cabling & Concealed Drainage',
+  'Grand Entrance Arch with 24/7 Security Cabin',
+  'Overhead Water Tank with 24/7 Water Supply',
+  'Pre-Approved Bank Loans (SBI, HDFC, ICICI, Axis Bank)',
+]).map(h => `• ${h}`).join('\n')}
+
+------------------------------------------------------------------------
+2. ROADS & INFRASTRUCTURE
+------------------------------------------------------------------------
+Road Network: ${proj?.roads || '40-ft Main Boulevard & 30-ft Internal BT Roads'}
+Utilities: ${proj?.utilities || 'Underground Drainage, Concealed Power Grid, Overhead Water Tank & STP'}
+
+Completed Facilities:
+${(proj?.completedFacilities || [
+  'Grand Entrance Gateway with 24x7 Security Cabin & Smart Boom Barrier',
+  'Asphalt Blacktop Roads with Kerb Stones & Stormwater Drains',
+  'Solar-Fenced Outer Compound Wall with Guard Posts',
+  'Underground Drainage & Water Distribution Network',
+]).map(f => `  [✓] ${f}`).join('\n')}
+
+------------------------------------------------------------------------
+3. STRATEGIC LOCATION CONNECTIVITY
+------------------------------------------------------------------------
+${(proj?.locationAdvantages || [
+  { landmark: 'Outer Ring Road (ORR) Exit', dist: '5 mins' },
+  { landmark: 'Rajiv Gandhi International Airport (RGIA)', dist: '18 mins' },
+  { landmark: 'HITEC City & Financial District', dist: '30 mins' },
+]).map(loc => `• ${loc.landmark}: ${loc.dist}`).join('\n')}
+
+------------------------------------------------------------------------
+4. VERIFIED LEGAL TITLES & SPOT REGISTRATION
+------------------------------------------------------------------------
+• 100% Clear Title Free of All Encumbrances
+• Immediate Spot Sub-Registrar Registration Available
+• Pre-Approved Bank Loan Facility (Up to 75% Funding Available)
+
+Direct Sales Advisory:
+Phone: ${siteConfig.phone}
+WhatsApp: ${siteConfig.whatsapp}
+Website: https://deccanidentity.com/demo/plotventure
+========================================================================`;
+
+  const blob = new Blob([blobContent], { type: 'text/plain;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${projName.replace(/\s+/g, '-')}-Official-Brochure.txt`;
+  link.click();
+}
+
+// ─── Single Plot Details Modal ────────────────────────────────────────────────
+function PlotModal({ plot, project, onClose, onEnquire, onBookVisit, onStatusChange }) {
+  if (!plot) return null;
+  const isAvailable = plot.status === 'available';
+
+  return (
+    <div className="pv-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="plot-modal-title">
+      <div className="pv-modal" onClick={e => e.stopPropagation()}>
+        <button className="pv-modal__close" onClick={onClose} aria-label="Close">×</button>
+        
+        <div className="pv-modal__header">
+          <div>
+            <h3 id="plot-modal-title" style={{ margin: 0, fontSize: '1.3rem' }}>Plot #{plot.label}</h3>
+            <span style={{ fontSize: '0.75rem', color: 'var(--pv-text-muted)' }}>
+              {project?.name || 'PlotVenture Township'} · {plot.sector}
+            </span>
+          </div>
+          <span
+            className="pv-status-badge"
+            style={{
+              background: `${STATUS_COLORS[plot.status]}22`,
+              color: STATUS_COLORS[plot.status],
+              border: `1px solid ${STATUS_COLORS[plot.status]}55`,
+            }}
+          >
+            {STATUS_LABELS[plot.status]}
+          </span>
+        </div>
+
+        <div className="pv-modal__details-grid">
+          <div className="pv-modal__detail-item">
+            <span>Plot Area</span>
+            <strong>{plot.area} Sq.Yds</strong>
+          </div>
+          <div className="pv-modal__detail-item">
+            <span>Dimensions</span>
+            <strong>{plot.dimensions || "30' x 45'"}</strong>
+          </div>
+          <div className="pv-modal__detail-item">
+            <span>Facing</span>
+            <strong>{plot.facing} Facing</strong>
+          </div>
+          <div className="pv-modal__detail-item">
+            <span>Road Width</span>
+            <strong>{plot.road}</strong>
+          </div>
+          <div className="pv-modal__detail-item">
+            <span>Total Price</span>
+            <strong style={{ color: 'var(--pv-gold)' }}>₹{plot.price} Lakhs*</strong>
+          </div>
+          <div className="pv-modal__detail-item">
+            <span>Corner Plot</span>
+            <strong>{plot.corner ? '⭐ Yes (Prime Corner)' : 'Standard Plot'}</strong>
+          </div>
+        </div>
+
+        <p style={{ fontSize: '0.75rem', color: 'var(--pv-text-muted)', margin: '12px 0' }}>
+          * Price indicative. Clear title with immediate spot registration and bank loan approvals (up to 75%).
+        </p>
+
+        <div className="pv-modal__actions">
+          {isAvailable ? (
+            <>
+              <button
+                className="pv-btn-gold"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => onEnquire(plot)}
+              >
+                💬 Enquire About Plot #{plot.label}
+              </button>
+              <button
+                className="pv-btn-outline"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => onBookVisit(project, plot)}
+              >
+                🚗 Schedule Free Site Visit
+              </button>
+            </>
+          ) : (
+            <div style={{
+              background: 'rgba(220, 38, 38, 0.1)',
+              border: '1px solid rgba(220, 38, 38, 0.3)',
+              borderRadius: '8px',
+              padding: '12px',
+              textAlign: 'center',
+              fontSize: '0.8125rem',
+              color: '#ef4444'
+            }}>
+              ⚠️ <strong>Plot #{plot.label} is currently {STATUS_LABELS[plot.status]}.</strong>
+              <div style={{ color: 'var(--pv-text-muted)', fontSize: '0.75rem', marginTop: 4 }}>
+                Online booking is disabled for this plot. Please explore other available plots.
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 10, borderTop: '1px solid var(--pv-navy-border)', fontSize: '0.75rem', color: 'var(--pv-text-muted)' }}>
+            <span>Demo Status:</span>
+            <select
+              value={plot.status}
+              onChange={(e) => onStatusChange(plot.id, e.target.value)}
+              className="pv-filter-select"
+              style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+            >
+              <option value="available">Available (🟢)</option>
+              <option value="booked">Booked (🟡)</option>
+              <option value="sold">Sold (🔴)</option>
+              <option value="blocked">Blocked / Held (🟣)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Single Project Brochure Modal (Instant View & Direct Download) ────────────
+function BrochureModal({ project, onClose }) {
+  const [downloaded, setDownloaded] = useState(false);
+  const proj = project || PROJECTS[0];
+
+  function handleDirectDownload() {
+    downloadProjectBrochure(proj);
+    setDownloaded(true);
+  }
+
+  return (
+    <div className="pv-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="brochure-title">
+      <div className="pv-modal pv-brochure-modal" onClick={e => e.stopPropagation()}>
+        <button className="pv-modal__close" onClick={onClose} aria-label="Close">×</button>
+
+        <div className="pv-bmodal-header">
+          <div className="pv-badge" style={{ marginBottom: 6 }}>Official Township Document</div>
+          <h2 id="brochure-title" style={{ fontSize: '1.35rem', margin: '4px 0 6px' }}>{proj.name}</h2>
+          <p style={{ color: 'var(--pv-text-muted)', fontSize: '0.875rem', margin: 0 }}>
+            📍 {proj.location} · <strong style={{ color: 'var(--pv-gold)' }}>{proj.approvalDetails || proj.approval}</strong>
+          </p>
+        </div>
+
+        {downloaded && (
+          <div className="pv-alert pv-alert--success" style={{ margin: '12px 0 0' }}>
+            <span>✅ Official brochure file downloaded directly to your device!</span>
+          </div>
+        )}
+
+        <div className="pv-bmodal-body">
+          <div className="pv-bmodal-preview-grid">
+            <div className="pv-bmodal-cover-wrap">
+              <img src={proj.image} alt={proj.name} className="pv-bmodal-cover-img" />
+              <div className="pv-bmodal-badge">{proj.stageLabel || proj.category}</div>
+            </div>
+            <div className="pv-bmodal-specs">
+              <div className="pv-bmodal-spec-row">
+                <span>Plot Area:</span>
+                <strong>{proj.plotSizes}</strong>
+              </div>
+              <div className="pv-bmodal-spec-row">
+                <span>Base Rate:</span>
+                <strong>₹{(proj.ratePerSqYd || 19500).toLocaleString('en-IN')}/Sq.Yd</strong>
+              </div>
+              <div className="pv-bmodal-spec-row">
+                <span>Starting Cost:</span>
+                <strong style={{ color: 'var(--pv-gold)' }}>{proj.minPrice}</strong>
+              </div>
+              <div className="pv-bmodal-spec-row">
+                <span>Registration:</span>
+                <strong style={{ color: '#16a34a' }}>Spot Sub-Registrar</strong>
+              </div>
+              <div className="pv-bmodal-spec-row">
+                <span>Bank Loan:</span>
+                <strong>Up to 75% Pre-Approved</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="pv-bmodal-highlights">
+            <h4 style={{ fontSize: '0.875rem', marginBottom: 8, color: 'var(--pv-text-main)' }}>Key Township Features:</h4>
+            <ul style={{ margin: 0, paddingLeft: 18, fontSize: '0.8125rem', color: 'var(--pv-text-muted)', lineHeight: 1.6 }}>
+              {(proj.highlights || []).slice(0, 4).map((h, i) => (
+                <li key={i}>{h}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="pv-bmodal-actions">
+          <button
+            className="pv-btn-gold"
+            onClick={handleDirectDownload}
+            style={{ flex: 1, justifyContent: 'center' }}
+          >
+            📥 Download Official Brochure (Instant)
+          </button>
+          <a
+            href={`https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+              `Hi! Please send me the official PDF brochure and price list for ${proj.name} (${proj.location}).`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pv-btn-outline"
+            style={{ justifyContent: 'center' }}
+          >
+            💬 Get on WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Multi-Project Brochures List Modal (All Available Brochures) ─────────────
+function BrochuresListModal({ onClose, onViewBrochure }) {
+  const [filterStage, setFilterStage] = useState('all');
+  const [search, setSearch] = useState('');
+  const [downloadSuccessId, setDownloadSuccessId] = useState(null);
+
+  const filteredBrochures = useMemo(() => {
+    return PROJECTS.filter(proj => {
+      if (filterStage !== 'all' && proj.stage !== filterStage) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase().trim();
+        return proj.name.toLowerCase().includes(q) || proj.location.toLowerCase().includes(q);
+      }
+      return true;
+    });
+  }, [filterStage, search]);
+
+  function handleDownloadBrochure(proj) {
+    downloadProjectBrochure(proj);
+    setDownloadSuccessId(proj.id);
+    setTimeout(() => setDownloadSuccessId(null), 4000);
+  }
+
+  return (
+    <div className="pv-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="brochures-list-title">
+      <div className="pv-modal pv-brochures-list-modal" onClick={e => e.stopPropagation()}>
+        <button className="pv-modal__close" onClick={onClose} aria-label="Close">×</button>
+
+        <div className="pv-blist-header">
+          <div className="pv-badge" style={{ marginBottom: 4 }}>Unrestricted Direct Access</div>
+          <h2 id="brochures-list-title" style={{ fontSize: '1.4rem', margin: '4px 0 6px' }}>
+            Official Plotted Township Brochures
+          </h2>
+          <p style={{ color: 'var(--pv-text-muted)', fontSize: '0.85rem', margin: 0 }}>
+            Download verified layout masterplans, approval documents, and pricing sheets directly — no contact details or signup required.
+          </p>
+        </div>
+
+        <div className="pv-blist-toolbar">
+          <div className="pv-stage-tabs" role="tablist">
+            {[
+              ['all', `All Ventures (${PROJECTS.length})`],
+              ['ongoing', 'Ongoing (1)'],
+              ['completed', 'Ready / Completed (1)'],
+              ['upcoming', 'New Launch (1)'],
+            ].map(([val, label]) => (
+              <button
+                key={val}
+                className={`pv-stage-tab ${filterStage === val ? 'active' : ''}`}
+                onClick={() => setFilterStage(val)}
+                role="tab"
+                aria-selected={filterStage === val}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <input
+            className="pv-plot-search-input"
+            placeholder="🔍 Search venture or corridor..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ maxWidth: 220 }}
+            aria-label="Search brochures"
+          />
+        </div>
+
+        {downloadSuccessId && (
+          <div className="pv-alert pv-alert--success" style={{ margin: '12px 0 0' }}>
+            <span>✅ Official brochure document downloaded directly to your device!</span>
+          </div>
+        )}
+
+        <div className="pv-blist-grid">
+          {filteredBrochures.map(proj => (
+            <div key={proj.id} className="pv-blist-card">
+              <div className="pv-blist-card__thumb">
+                <img src={proj.image} alt={proj.name} />
+                <span className={`pv-stage-pill ${proj.stage}`}>{proj.stage}</span>
+              </div>
+              <div className="pv-blist-card__content">
+                <h3 className="pv-blist-card__title">{proj.name}</h3>
+                <div className="pv-blist-card__loc">📍 {proj.location}</div>
+                <div className="pv-blist-card__specs">
+                  <span>📐 {proj.plotSizes}</span>
+                  <span style={{ color: 'var(--pv-gold)', fontWeight: 700 }}>💰 From {proj.minPrice}</span>
+                  <span>🛡️ {proj.approval}</span>
+                </div>
+                <div className="pv-blist-card__approval">
+                  {proj.approvalDetails}
+                </div>
+              </div>
+              <div className="pv-blist-card__actions">
+                <button
+                  className="pv-btn-outline pv-btn-sm"
+                  onClick={() => {
+                    onClose();
+                    onViewBrochure(proj);
+                  }}
+                  title="View Brochure Details"
+                >
+                  👁️ View
+                </button>
+                <button
+                  className="pv-btn-gold pv-btn-sm"
+                  onClick={() => handleDownloadBrochure(proj)}
+                  title="Direct Download Brochure Document"
+                >
+                  📥 Download
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="pv-blist-footer">
+          <span style={{ color: 'var(--pv-text-muted)', fontSize: '0.8125rem' }}>
+            All documents are verified with HMDA, DTCP & Telangana RERA sanction records.
+          </span>
+          <button className="pv-btn-outline pv-btn-sm" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Site Visit Booking Modal / Form ──────────────────────────────────────────
+function SiteVisitModal({ project, defaultPlot, onClose, onBookingSuccess }) {
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    projectId: project ? project.id : PROJECTS[0].id,
+    date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    timeSlot: 'Morning (10:00 AM – 01:00 PM)',
+    message: defaultPlot ? `Interested in inspecting Plot #${defaultPlot.label} (${defaultPlot.area} Sq.Yds)` : '',
+  });
+  const [loading, setLoading] = useState(false);
+  const [bookingRef, setBookingRef] = useState(null);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+
+    setTimeout(() => {
+      const refId = `PV-VISIT-${Math.floor(100000 + Math.random() * 900000)}`;
+      setBookingRef(refId);
+      setLoading(false);
+      if (onBookingSuccess) {
+        onBookingSuccess({
+          refId,
+          ...formData,
+          createdAt: new Date().toLocaleTimeString(),
+        });
+      }
+    }, 600);
+  }
+
+  const selectedProj = PROJECTS.find(p => p.id === formData.projectId) || PROJECTS[0];
+
+  return (
+    <div className="pv-modal-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="visit-modal-title">
+      <div className="pv-modal" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+        <button className="pv-modal__close" onClick={onClose} aria-label="Close">×</button>
+        
+        <h3 id="visit-modal-title" style={{ margin: '0 0 4px', fontSize: '1.25rem' }}>Schedule a Site Visit</h3>
+        <p style={{ color: 'var(--pv-text-muted)', fontSize: '0.8125rem', marginBottom: '1.25rem' }}>
+          Complimentary AC cab pickup & guided plot walkthrough with our senior project advisors.
+        </p>
+
+        {bookingRef ? (
+          <div style={{ textAlign: 'center', padding: '0.75rem 0' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🚗✅</div>
+            <h4 style={{ color: '#16a34a', fontSize: '1.15rem', marginBottom: '6px' }}>Site Visit Scheduled!</h4>
+            <div style={{
+              background: 'var(--pv-gold-dim)',
+              border: '1px solid var(--pv-gold-glow)',
+              borderRadius: '8px',
+              padding: '12px',
+              margin: '12px 0',
+              fontSize: '0.8125rem'
+            }}>
+              <div>Booking Reference: <strong style={{ color: 'var(--pv-gold)' }}>{bookingRef}</strong></div>
+              <div style={{ color: 'var(--pv-text-muted)', marginTop: 4 }}>
+                Venture: <strong>{selectedProj.name}</strong> · Date: <strong>{formData.date}</strong>
+              </div>
+            </div>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--pv-text-muted)', marginBottom: 16 }}>
+              Our relationship manager will contact you at <strong>{formData.phone}</strong> to coordinate pickup.
+            </p>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="pv-btn-gold"
+                style={{ flex: 1, justifyContent: 'center' }}
+                onClick={() => {
+                  window.open(
+                    `https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                      `Hi! I have scheduled a site visit for ${selectedProj.name} on ${formData.date} (${formData.timeSlot}). Booking Ref: ${bookingRef}. Please confirm.`
+                    )}`,
+                    '_blank'
+                  );
+                }}
+              >
+                💬 WhatsApp Confirmation
+              </button>
+              <button className="pv-btn-outline" style={{ flex: 1, justifyContent: 'center' }} onClick={onClose}>
+                Done
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--pv-text-muted)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+                SELECT PLOTTED VENTURE *
+              </label>
+              <select
+                className="pv-filter-select"
+                style={{ width: '100%' }}
+                value={formData.projectId}
+                onChange={e => setFormData({ ...formData, projectId: e.target.value })}
+              >
+                {PROJECTS.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — {p.location.split(',')[0]} ({p.minPrice})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--pv-text-muted)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+                YOUR FULL NAME *
+              </label>
+              <input
+                className="pv-input"
+                placeholder="Full Name"
+                required
+                value={formData.name}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--pv-text-muted)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+                PHONE NUMBER *
+              </label>
+              <input
+                className="pv-input"
+                placeholder="10-Digit Mobile Number"
+                type="tel"
+                required
+                pattern="[0-9]{10}"
+                value={formData.phone}
+                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--pv-text-muted)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+                  VISIT DATE *
+                </label>
+                <input
+                  className="pv-input"
+                  type="date"
+                  required
+                  min={new Date().toISOString().split('T')[0]}
+                  value={formData.date}
+                  onChange={e => setFormData({ ...formData, date: e.target.value })}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.75rem', color: 'var(--pv-text-muted)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+                  TIME SLOT *
+                </label>
+                <select
+                  className="pv-filter-select"
+                  style={{ width: '100%' }}
+                  value={formData.timeSlot}
+                  onChange={e => setFormData({ ...formData, timeSlot: e.target.value })}
+                >
+                  <option value="Morning (10:00 AM – 01:00 PM)">10 AM – 1 PM</option>
+                  <option value="Afternoon (02:00 PM – 05:00 PM)">2 PM – 5 PM</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.75rem', color: 'var(--pv-text-muted)', fontWeight: 600, display: 'block', marginBottom: 4 }}>
+                SPECIAL NOTES (OPTIONAL)
+              </label>
+              <input
+                className="pv-input"
+                placeholder="E.g., Require cab pickup, specific plot query"
+                value={formData.message}
+                onChange={e => setFormData({ ...formData, message: e.target.value })}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="pv-btn-gold"
+              disabled={loading}
+              style={{ justifyContent: 'center', marginTop: 4, width: '100%' }}
+            >
+              {loading ? 'Confirming Site Visit...' : '🚗 Confirm Free Site Visit'}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Interactive Layout Masterplan Page Component ─────────────────────────────
+function LayoutPage({
+  activeProject,
+  onSelectProject,
+  plots,
+  onStatusChange,
+  onBookVisit,
+  onOpenBrochure,
+  onOpenBrochuresList,
+  onSelectPlotModal,
+}) {
+  const project = activeProject || PROJECTS[0];
+  const config = PV_LAYOUT_CONFIG[project.id] || PV_LAYOUT_CONFIG['green-county-elite'];
+
+  const [selected, setSelected] = useState(() => plots.find(p => p.status === 'available') || plots[0] || null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sectorFilter, setSectorFilter] = useState('all');
+  const [facingFilter, setFacingFilter] = useState('all');
+  const [cornerOnly, setCornerOnly] = useState(false);
+
+  // Layout Plan Switcher & Pan/Zoom Controls
+  const [activePlanType, setActivePlanType] = useState('interactive'); // 'interactive' | 'blueprint' | 'masterplan'
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [touchStartDist, setTouchStartDist] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const viewportRef = useRef(null);
+
+  useEffect(() => {
+    const firstAvail = plots.find(p => p.status === 'available') || plots[0] || null;
+    setSelected(firstAvail);
+    setSearchQuery('');
+    setStatusFilter('all');
+    setSectorFilter('all');
+    setFacingFilter('all');
+    setCornerOnly(false);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setIsDragging(false);
+  }, [project.id, plots]);
+
+  const counts = useMemo(() => {
+    return {
+      available: plots.filter(p => p.status === 'available').length,
+      booked: plots.filter(p => p.status === 'booked').length,
+      sold: plots.filter(p => p.status === 'sold').length,
+      blocked: plots.filter(p => p.status === 'blocked').length,
+      total: plots.length,
+    };
+  }, [plots]);
+
+  const filteredPlots = useMemo(() => {
+    return plots.filter(p => {
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim().replace('#', '');
+        if (!p.label.toLowerCase().includes(q) && !(p.sector || '').toLowerCase().includes(q)) {
+          return false;
+        }
+      }
+      if (statusFilter !== 'all' && p.status !== statusFilter) return false;
+      if (sectorFilter !== 'all' && p.sector !== sectorFilter) return false;
+      if (facingFilter !== 'all' && p.facing !== facingFilter) return false;
+      if (cornerOnly && !p.corner) return false;
+      return true;
+    });
+  }, [plots, searchQuery, statusFilter, sectorFilter, facingFilter, cornerOnly]);
+
+  function handleEnquire(plot) {
+    if (!plot) return;
+    window.open(
+      `https://wa.me/${siteConfig.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+        `Hi! I'm interested in Plot #${plot.label} (${plot.area} Sq.Yds, ₹${plot.price} Lakhs, ${plot.facing} facing) in ${project.name} (${project.location}). Please confirm availability.`
+      )}`,
+      '_blank'
+    );
+  }
+
+  function handleDownloadPlotSheet(plot) {
+    if (!plot) return;
+    const content = `=====================================================
+${project.name.toUpperCase()} — PLOT SPECIFICATION SHEET
+=====================================================
+Project: ${project.name} (${project.location})
+Plot Number: #${plot.label}
+Sector: ${plot.sector || config.sectors[0]}
+Dimensions: ${plot.dimensions}
+Plot Area: ${plot.area} Sq.Yards (${plot.sqft || plot.area * 9} Sq.Feet)
+Facing: ${plot.facing} Facing (100% Vaastu Compliant)
+Road Frontage: ${plot.road}
+Corner Status: ${plot.corner ? 'Prime Corner Plot' : 'Standard Avenue Plot'}
+Current Status: ${STATUS_LABELS[plot.status]}
+
+PRICING DETAILS:
+Base Rate: ₹${(plot.pricePerYd || config.basePricePerYd).toLocaleString('en-IN')} per Sq.Yd
+Total Indicative Cost: ₹${plot.price} Lakhs*
+Estimated 75% Bank Loan: ₹${(plot.price * 0.75).toFixed(2)} Lakhs
+Approved Lenders: State Bank of India (SBI), HDFC Bank, ICICI Bank, Axis Bank
+
+GOVERNMENT APPROVALS:
+Approval: ${project.approvalDetails || project.approval}
+Registration: Spot Sub-Registrar Registration Available
+
+Contact: ${siteConfig.phone} | WhatsApp: ${siteConfig.whatsapp}
+Website: https://deccanidentity.com/demo/plotventure
+=====================================================`;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${project.id}-Plot-${plot.label}-Specifications.txt`;
+    link.click();
+  }
+
+  function handleZoomIn() {
+    setZoom(z => Math.min(Number((z + 0.25).toFixed(2)), 3.5));
+  }
+
+  function handleZoomOut() {
+    setZoom(z => Math.max(Number((z - 0.25).toFixed(2)), 0.75));
+  }
+
+  function handleResetView() {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }
+
+  function handleMouseDown(e) {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  }
+
+  function handleMouseMove(e) {
+    if (!isDragging) return;
+    setPan({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  }
+
+  function handleMouseUp() {
+    setIsDragging(false);
+  }
+
+  function handleWheel(e) {
+    if (e.ctrlKey || Math.abs(e.deltaY) > 0) {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      setZoom(z => Math.min(Math.max(Number((z + delta).toFixed(2)), 0.75), 3.5));
+    }
+  }
+
+  function handleTouchStart(e) {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y,
+      });
+    } else if (e.touches.length === 2) {
+      setIsDragging(false);
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      setTouchStartDist(dist);
+    }
+  }
+
+  function handleTouchMove(e) {
+    if (e.touches.length === 1 && isDragging) {
+      setPan({
+        x: e.touches[0].clientX - dragStart.x,
+        y: e.touches[0].clientY - dragStart.y,
+      });
+    } else if (e.touches.length === 2 && touchStartDist) {
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const ratio = currentDist / touchStartDist;
+      if (Math.abs(ratio - 1) > 0.05) {
+        setZoom(z => Math.min(Math.max(Number((z * (ratio > 1 ? 1.05 : 0.95)).toFixed(2)), 0.75), 3.5));
+        setTouchStartDist(currentDist);
+      }
+    }
+  }
+
+  function handleTouchEnd() {
+    setIsDragging(false);
+    setTouchStartDist(null);
+  }
+
+  const blueprintSrc = '/images/actual-site-layout.png';
+  const masterplanSrc = project.image || '/images/plotventure-hero.jpg';
+
+  return (
+    <div className="pv-layout-page pv-section" style={{ maxWidth: '1280px', margin: '0 auto', padding: '1.5rem' }}>
+      {/* ── 0. Project Selector Bar ── */}
+      <div className="pv-layout-project-selector">
+        <span className="pv-layout-project-label">Select Plotted Venture:</span>
+        <div className="pv-layout-project-pills" role="tablist">
+          {PROJECTS.map(proj => {
+            const isCurrent = project.id === proj.id;
+            return (
+              <button
+                key={proj.id}
+                className={`pv-proj-pill ${isCurrent ? 'active' : ''}`}
+                onClick={() => onSelectProject(proj.id)}
+                role="tab"
+                aria-selected={isCurrent}
+              >
+                <span className="pv-proj-pill__title">
+                  {proj.name}
+                  {isCurrent && <span style={{ color: 'var(--pv-gold)', marginLeft: 4 }}>✓</span>}
+                </span>
+                <span className="pv-proj-pill__meta">
+                  {proj.location.split(',')[0]} · {proj.approval.split(' ')[0]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── 1. Top Header Box ── */}
+      <div className="pv-layout-header-box">
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: 6 }}>
+            <span className="pv-badge">Interactive Masterplan</span>
+            <span style={{ fontSize: '0.8125rem', color: '#16a34a', fontWeight: 600 }}>
+              ● Live Synchronized Availability
+            </span>
+            <span className="pv-badge" style={{ background: 'var(--pv-gold-dim)', color: 'var(--pv-gold)' }}>
+              Rate: ₹{(config.basePricePerYd).toLocaleString('en-IN')}/Sq.Yd
+            </span>
+          </div>
+          <h1 className="pv-title" style={{ fontSize: '1.75rem', margin: '4px 0' }}>
+            {project.name} — Interactive Layout Masterplan
+          </h1>
+          <p style={{ color: 'var(--pv-text-muted)', fontSize: '0.875rem', margin: 0 }}>
+            {project.approvalDetails || project.approval} · 100% Vaastu Compliant Sanctioned Plotted Township
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button
+            className="pv-btn-outline pv-btn-sm"
+            onClick={() => onOpenBrochuresList ? onOpenBrochuresList() : onOpenBrochure(project)}
+            aria-label="View and download project brochures"
+          >
+            📥 All Brochures ({PROJECTS.length})
+          </button>
+          <button
+            className="pv-btn-gold pv-btn-sm"
+            onClick={() => onBookVisit(project, selected)}
+            aria-label="Schedule a site visit"
+          >
+            🚗 Book a Visit
+          </button>
+        </div>
+      </div>
+
+      {/* ── 2. Controls & Search Toolbar ── */}
+      <div className="pv-layout-controls">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <input
+            className="pv-plot-search-input"
+            placeholder="🔍 Search Plot # (e.g. 101)"
+            value={searchQuery}
+            onChange={e => {
+              setSearchQuery(e.target.value);
+              const found = plots.find(p => p.label.toLowerCase() === e.target.value.toLowerCase().replace('#', '').trim());
+              if (found) setSelected(found);
+            }}
+            aria-label="Search plot number"
+          />
+
+          <select
+            className="pv-filter-select"
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+            aria-label="Filter by status"
+          >
+            <option value="all">All Statuses ({counts.total})</option>
+            <option value="available">🟢 Available ({counts.available})</option>
+            <option value="booked">🟡 Booked ({counts.booked})</option>
+            <option value="sold">🔴 Sold ({counts.sold})</option>
+            <option value="blocked">🟣 Held ({counts.blocked})</option>
+          </select>
+
+          <select
+            className="pv-filter-select"
+            value={sectorFilter}
+            onChange={e => setSectorFilter(e.target.value)}
+            style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+            aria-label="Filter by sector"
+          >
+            <option value="all">All Sectors</option>
+            {config.sectors.map(sec => (
+              <option key={sec} value={sec}>{sec}</option>
+            ))}
+          </select>
+
+          <select
+            className="pv-filter-select"
+            value={facingFilter}
+            onChange={e => setFacingFilter(e.target.value)}
+            style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+            aria-label="Filter by facing"
+          >
+            <option value="all">All Facings</option>
+            <option value="East">East Facing</option>
+            <option value="West">West Facing</option>
+            <option value="North">North Facing</option>
+          </select>
+
+          <button
+            className={`pv-btn-sm ${cornerOnly ? 'pv-btn-gold' : 'pv-btn-outline'}`}
+            style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+            onClick={() => setCornerOnly(!cornerOnly)}
+            title="Show only corner plots"
+          >
+            ⭐ Corner Only
+          </button>
+        </div>
+      </div>
+
+      {/* ── 3. Split Layout: Canvas / Interactive SVG on Left, Inspector on Right ── */}
+      <div className="pv-layout-split">
+        {/* Left Side */}
+        <div>
+          {/* Legend Strip */}
+          <div className="pv-plot-legend" style={{ marginBottom: 12 }}>
+            <div className="pv-legend-item">
+              <span style={{ background: STATUS_COLORS.available }} />
+              <span>Available ({counts.available})</span>
+            </div>
+            <div className="pv-legend-item">
+              <span style={{ background: STATUS_COLORS.booked }} />
+              <span>Booked ({counts.booked})</span>
+            </div>
+            <div className="pv-legend-item">
+              <span style={{ background: STATUS_COLORS.sold }} />
+              <span>Sold ({counts.sold})</span>
+            </div>
+            <div className="pv-legend-item">
+              <span style={{ background: STATUS_COLORS.blocked }} />
+              <span>Held / Blocked ({counts.blocked})</span>
+            </div>
+            <div className="pv-legend-item" style={{ marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--pv-text-muted)' }}>
+              ⭐ Corner Plot Indicator
+            </div>
+          </div>
+
+          {/* Masterplan Map Container */}
+          <div className="pv-original-map-container">
+            {/* View Mode Switcher and Zoom Toolbar */}
+            <div className="pv-plan-switcher-bar">
+              <div className="pv-plan-type-tabs" role="tablist" aria-label="Select layout drawing format">
+                <button
+                  className={`pv-plan-type-btn ${activePlanType === 'interactive' ? 'active' : ''}`}
+                  onClick={() => { setActivePlanType('interactive'); handleResetView(); }}
+                  role="tab"
+                  aria-selected={activePlanType === 'interactive'}
+                >
+                  🗺️ Interactive SVG Layout Canvas (Clickable Plots)
+                </button>
+                <button
+                  className={`pv-plan-type-btn ${activePlanType === 'blueprint' ? 'active' : ''}`}
+                  onClick={() => { setActivePlanType('blueprint'); handleResetView(); }}
+                  role="tab"
+                  aria-selected={activePlanType === 'blueprint'}
+                >
+                  📐 Sanctioned Survey Blueprint
+                </button>
+                <button
+                  className={`pv-plan-type-btn ${activePlanType === 'masterplan' ? 'active' : ''}`}
+                  onClick={() => { setActivePlanType('masterplan'); handleResetView(); }}
+                  role="tab"
+                  aria-selected={activePlanType === 'masterplan'}
+                >
+                  🌿 3D Architectural Masterplan
+                </button>
+              </div>
+
+              {/* Zoom & Inspection Controls */}
+              <div className="pv-plan-zoom-toolbar">
+                <button className="pv-zoom-btn" onClick={handleZoomIn} title="Zoom In (+25%)" aria-label="Zoom In">
+                  ➕
+                </button>
+                <span className="pv-zoom-indicator">{Math.round(zoom * 100)}%</span>
+                <button className="pv-zoom-btn" onClick={handleZoomOut} title="Zoom Out (-25%)" aria-label="Zoom Out">
+                  ➖
+                </button>
+                <button className="pv-zoom-btn" onClick={handleResetView} title="Reset Zoom & Pan" aria-label="Reset View">
+                  ↺ Reset
+                </button>
+                <button
+                  className={`pv-zoom-btn ${isFullscreen ? 'active' : ''}`}
+                  onClick={() => setIsFullscreen(f => !f)}
+                  title={isFullscreen ? 'Exit Fullscreen' : 'View Fullscreen (⛶)'}
+                  aria-label="Toggle Fullscreen"
+                >
+                  {isFullscreen ? '✕ Exit' : '⛶ Fullscreen'}
+                </button>
+              </div>
+            </div>
+
+            {/* Interactive Pan & Zoom Viewport */}
+            <div
+              ref={viewportRef}
+              className={`pv-original-map-viewport ${isDragging ? 'is-dragging' : ''} ${isFullscreen ? 'is-fullscreen' : ''}`}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onWheel={handleWheel}
+              role="region"
+              aria-label={`${project.name} Layout Drawing`}
+              tabIndex={0}
+            >
+              {/* Orientation Compass Badge */}
+              <div className="pv-map-compass-badge" aria-label="Layout orientation">
+                <span className="pv-map-compass-arrow">🧭</span>
+                <div>
+                  <div className="pv-map-compass-heading">NORTH-EAST</div>
+                  <div className="pv-map-compass-sub">Grand Entrance 60' Rd</div>
+                </div>
+              </div>
+
+              {/* Sanction Stamp Badge */}
+              <div className="pv-map-sanction-badge">
+                <span className="pv-map-sanction-dot">●</span>
+                <span>
+                  {activePlanType === 'interactive'
+                    ? 'Interactive Sanctioned Cadastral Map · Live Status'
+                    : activePlanType === 'blueprint'
+                    ? 'Official Sanctioned Survey Blueprint'
+                    : '3D Township Masterplan Render'}
+                </span>
+              </div>
+
+              {/* Plan Canvas */}
+              <div
+                className="pv-original-map-canvas"
+                style={{
+                  transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                  transformOrigin: 'center center',
+                }}
+              >
+                {activePlanType === 'interactive' ? (
+                  /* Interactive SVG Canvas with 32 Clickable Plots */
+                  <svg
+                    viewBox="0 0 760 440"
+                    className="pv-svg-masterplan"
+                    style={{ width: '100%', maxWidth: '760px', height: 'auto', display: 'block' }}
+                  >
+                    {/* Background Township Plot Boundary */}
+                    <rect x="15" y="15" width="730" height="410" rx="14" fill="#0b192e" stroke="rgba(245, 158, 11, 0.3)" strokeWidth="2" />
+
+                    {/* Road Network Overlays */}
+                    {/* Road 1: Main Boulevard between Row 1 and Row 2 (y: 108, h: 40) */}
+                    <rect x="25" y="108" width="710" height="38" fill="rgba(15, 34, 61, 0.95)" stroke="rgba(245, 158, 11, 0.2)" strokeWidth="1" rx="4" />
+                    <line x1="30" y1="127" x2="730" y2="127" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="2" strokeDasharray="8 6" />
+                    <text x="380" y="131" textAnchor="middle" fill="var(--pv-gold)" fontSize="9" fontWeight="700" letterSpacing="1">
+                      {config.road1}
+                    </text>
+
+                    {/* Road 2: Avenue Road between Row 2 and Row 3 (y: 208, h: 36) */}
+                    <rect x="25" y="208" width="710" height="36" fill="rgba(15, 34, 61, 0.95)" stroke="rgba(245, 158, 11, 0.2)" strokeWidth="1" rx="4" />
+                    <line x1="30" y1="226" x2="730" y2="226" stroke="rgba(245, 158, 11, 0.35)" strokeWidth="1.5" strokeDasharray="6 6" />
+                    <text x="380" y="230" textAnchor="middle" fill="#94a3b8" fontSize="8.5" fontWeight="600" letterSpacing="0.8">
+                      {config.road2}
+                    </text>
+
+                    {/* Road 3: Cross Street between Row 3 and Row 4 (y: 306, h: 36) */}
+                    <rect x="25" y="306" width="710" height="36" fill="rgba(15, 34, 61, 0.95)" stroke="rgba(245, 158, 11, 0.2)" strokeWidth="1" rx="4" />
+                    <line x1="30" y1="324" x2="730" y2="324" stroke="rgba(245, 158, 11, 0.35)" strokeWidth="1.5" strokeDasharray="6 6" />
+                    <text x="380" y="328" textAnchor="middle" fill="#94a3b8" fontSize="8.5" fontWeight="600" letterSpacing="0.8">
+                      {config.road3}
+                    </text>
+
+                    {/* Central Amenity: Park (Row 1, x: 335, y: 48, w: 85, h: 56) */}
+                    <g className="pv-svg-amenity">
+                      <rect x="335" y="48" width="85" height="56" rx="8" fill={config.centralAmenity.bg} stroke={config.centralAmenity.stroke} strokeWidth="1.5" />
+                      <text x="377" y="68" textAnchor="middle" fontSize="16">{config.centralAmenity.emoji}</text>
+                      <text x="377" y="82" textAnchor="middle" fill={config.centralAmenity.textFill} fontSize="7.5" fontWeight="800">
+                        {config.centralAmenity.title}
+                      </text>
+                      <text x="377" y="93" textAnchor="middle" fill={config.centralAmenity.textFill} fontSize="7" fontWeight="600">
+                        {config.centralAmenity.subtitle}
+                      </text>
+                    </g>
+
+                    {/* Central Plaza (Row 2, x: 335, y: 148, w: 85, h: 56) */}
+                    <g className="pv-svg-amenity">
+                      <rect x="335" y="148" width="85" height="56" rx="8" fill={config.centralPlaza.bg} stroke={config.centralPlaza.stroke} strokeWidth="1.5" />
+                      <text x="377" y="168" textAnchor="middle" fontSize="16">{config.centralPlaza.emoji}</text>
+                      <text x="377" y="182" textAnchor="middle" fill={config.centralPlaza.textFill} fontSize="7.5" fontWeight="800">
+                        {config.centralPlaza.title}
+                      </text>
+                      <text x="377" y="193" textAnchor="middle" fill={config.centralPlaza.textFill} fontSize="7" fontWeight="600">
+                        {config.centralPlaza.subtitle}
+                      </text>
+                    </g>
+
+                    {/* Utility Yard (Row 3, x: 675, y: 246, w: 60, h: 56) */}
+                    <g className="pv-svg-amenity">
+                      <rect x="675" y="246" width="60" height="56" rx="8" fill={config.utilityYard.bg} stroke={config.utilityYard.stroke} strokeWidth="1.5" />
+                      <text x="705" y="266" textAnchor="middle" fontSize="14">{config.utilityYard.emoji}</text>
+                      <text x="705" y="280" textAnchor="middle" fill={config.utilityYard.textFill} fontSize="6.5" fontWeight="800">
+                        {config.utilityYard.title}
+                      </text>
+                      <text x="705" y="291" textAnchor="middle" fill={config.utilityYard.textFill} fontSize="6" fontWeight="600">
+                        {config.utilityYard.subtitle}
+                      </text>
+                    </g>
+
+                    {/* Grand Entrance Arch (Row 4, x: 25, y: 344, w: 80, h: 56) */}
+                    <g className="pv-svg-amenity">
+                      <rect x="25" y="344" width="80" height="56" rx="8" fill="rgba(245, 158, 11, 0.15)" stroke="rgba(245, 158, 11, 0.5)" strokeWidth="1.5" />
+                      <text x="65" y="364" textAnchor="middle" fontSize="16">🏛️</text>
+                      <text x="65" y="378" textAnchor="middle" fill="var(--pv-gold)" fontSize="7" fontWeight="800">
+                        GRAND ARCH
+                      </text>
+                      <text x="65" y="389" textAnchor="middle" fill="var(--pv-text-muted)" fontSize="6" fontWeight="600">
+                        24x7 Security
+                      </text>
+                    </g>
+
+                    {/* Render Interactive Clickable Plots */}
+                    {plots.map(plot => {
+                      const isSelected = selected && selected.id === plot.id;
+                      const isMatch = filteredPlots.some(fp => fp.id === plot.id);
+                      const baseColor = STATUS_COLORS[plot.status] || '#16a34a';
+
+                      return (
+                        <g
+                          key={plot.id}
+                          className={`pv-plot-cell ${isSelected ? 'is-selected' : ''} ${!isMatch ? 'is-dimmed' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelected(plot);
+                          }}
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            setSelected(plot);
+                            if (onSelectPlotModal) onSelectPlotModal(plot);
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {/* Plot Boundary Rectangle */}
+                          <rect
+                            x={plot.x}
+                            y={plot.y}
+                            width={plot.w}
+                            height={plot.h}
+                            rx="5"
+                            fill={isSelected ? 'rgba(245, 158, 11, 0.35)' : `${baseColor}1a`}
+                            stroke={isSelected ? '#f59e0b' : baseColor}
+                            strokeWidth={isSelected ? '2.5' : '1.2'}
+                            strokeDasharray={plot.status === 'blocked' ? '3 3' : 'none'}
+                          />
+
+                          {/* Corner Plot Indicator */}
+                          {plot.corner && (
+                            <text x={plot.x + 6} y={plot.y + 11} fill="#fbbf24" fontSize="8" fontWeight="bold">
+                              ★
+                            </text>
+                          )}
+
+                          {/* Plot Number */}
+                          <text
+                            x={plot.x + plot.w / 2}
+                            y={plot.y + (plot.h / 2) - 3}
+                            textAnchor="middle"
+                            fill="#f8fafc"
+                            fontSize="10"
+                            fontWeight="800"
+                          >
+                            #{plot.label}
+                          </text>
+
+                          {/* Area in Sq.Yds */}
+                          <text
+                            x={plot.x + plot.w / 2}
+                            y={plot.y + (plot.h / 2) + 9}
+                            textAnchor="middle"
+                            fill={baseColor}
+                            fontSize="7.5"
+                            fontWeight="700"
+                          >
+                            {plot.area} Yd
+                          </text>
+
+                          {/* Facing */}
+                          <text
+                            x={plot.x + plot.w / 2}
+                            y={plot.y + (plot.h / 2) + 19}
+                            textAnchor="middle"
+                            fill="rgba(248, 250, 252, 0.65)"
+                            fontSize="6"
+                            fontWeight="500"
+                          >
+                            {plot.facing.split(' ')[0]}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+                ) : (
+                  <img
+                    src={activePlanType === 'blueprint' ? blueprintSrc : masterplanSrc}
+                    alt={`${project.name} Masterplan`}
+                    className="pv-original-layout-img"
+                    draggable={false}
+                  />
+                )}
+              </div>
+
+              {/* Helper Hint */}
+              <div className="pv-map-help-hint">
+                <span>🖐️ Drag to pan</span>
+                <span>·</span>
+                <span>🔍 + / − or wheel to zoom</span>
+                <span>·</span>
+                <span>👆 Click plot to inspect</span>
+                <span>·</span>
+                <span className="pv-map-zoom-pill">{Math.round(zoom * 100)}%</span>
+              </div>
+            </div>
+
+            {/* Layout Specs Strip */}
+            <div className="pv-layout-specs-strip">
+              <div className="pv-lstrip-item">
+                <span className="pv-lstrip-label">Official Sanction</span>
+                <strong className="pv-lstrip-val">{project.approvalDetails || project.approval}</strong>
+              </div>
+              <div className="pv-lstrip-item">
+                <span className="pv-lstrip-label">Sanctioned Plots</span>
+                <strong className="pv-lstrip-val">Plots #101 to #132 Surveyed</strong>
+              </div>
+              <div className="pv-lstrip-item">
+                <span className="pv-lstrip-label">Road Network</span>
+                <strong className="pv-lstrip-val">{project.roads}</strong>
+              </div>
+              <div className="pv-lstrip-item">
+                <span className="pv-lstrip-label">Township Utilities</span>
+                <strong className="pv-lstrip-val">{project.utilities}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Live Plot Inspector Card */}
+        <div>
+          {selected ? (
+            <div className="pv-layout-inspector">
+              <div className="pv-inspector-header">
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--pv-gold)', fontWeight: 700, textTransform: 'uppercase' }}>
+                    {selected.sector || config.sectors[0]} · {project.name}
+                  </span>
+                  <h3 className="pv-inspector-title">Plot #{selected.label}</h3>
+                </div>
+                <span
+                  className="pv-status-badge"
+                  style={{
+                    background: `${STATUS_COLORS[selected.status]}24`,
+                    color: STATUS_COLORS[selected.status],
+                    border: `1px solid ${STATUS_COLORS[selected.status]}66`,
+                  }}
+                >
+                  {STATUS_LABELS[selected.status]}
+                </span>
+              </div>
+
+              {/* Specifications */}
+              <div className="pv-inspector-grid">
+                <div className="pv-inspector-item">
+                  <span>Plot Area</span>
+                  <strong>{selected.area} Sq.Yds</strong>
+                  <span style={{ fontSize: '0.6875rem', color: 'var(--pv-text-muted)' }}>({selected.sqft || selected.area * 9} Sq.Ft)</span>
+                </div>
+                <div className="pv-inspector-item">
+                  <span>Dimensions</span>
+                  <strong>{selected.dimensions}</strong>
+                </div>
+                <div className="pv-inspector-item">
+                  <span>Facing</span>
+                  <strong>{selected.facing} Facing</strong>
+                  <span style={{ fontSize: '0.6875rem', color: '#16a34a' }}>100% Vaastu</span>
+                </div>
+                <div className="pv-inspector-item">
+                  <span>Road Width</span>
+                  <strong>{selected.road.split('(')[0].trim()}</strong>
+                </div>
+                <div className="pv-inspector-item">
+                  <span>Corner Plot</span>
+                  <strong>{selected.corner ? '⭐ Prime Corner' : 'Standard Plot'}</strong>
+                </div>
+                <div className="pv-inspector-item">
+                  <span>Rate / Sq.Yd</span>
+                  <strong>₹{(selected.pricePerYd || config.basePricePerYd).toLocaleString('en-IN')}</strong>
+                </div>
+              </div>
+
+              {/* Pricing Box */}
+              <div className="pv-inspector-price-box">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--pv-text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+                    TOTAL INDICATIVE PRICE
+                  </span>
+                  <strong style={{ fontSize: '1.3rem', color: 'var(--pv-gold)' }}>
+                    ₹{selected.price} Lakhs*
+                  </strong>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--pv-text-muted)' }}>
+                  🏦 Bank Loan Eligible: Up to ₹{(selected.price * 0.75).toFixed(2)} Lakhs (75%)
+                </div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--pv-text-muted)', marginTop: 4 }}>
+                  Estimated EMI: ~₹{Math.round(selected.price * 0.75 * 100000 * 0.0085).toLocaleString('en-IN')}/mo
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pv-inspector-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {selected.status === 'available' ? (
+                  <>
+                    <button
+                      className="pv-btn-gold"
+                      style={{ justifyContent: 'center' }}
+                      onClick={() => handleEnquire(selected)}
+                    >
+                      💬 Hold / Enquire via WhatsApp
+                    </button>
+                    <button
+                      className="pv-btn-outline"
+                      style={{ justifyContent: 'center' }}
+                      onClick={() => onBookVisit(project, selected)}
+                    >
+                      🚗 Schedule Site Visit for Plot #{selected.label}
+                    </button>
+                    <button
+                      className="pv-btn-outline pv-btn-sm"
+                      style={{ justifyContent: 'center' }}
+                      onClick={() => handleDownloadPlotSheet(selected)}
+                    >
+                      📥 Download Plot #{selected.label} Spec Sheet
+                    </button>
+                    {onSelectPlotModal && (
+                      <button
+                        className="pv-btn-outline pv-btn-sm"
+                        style={{ justifyContent: 'center' }}
+                        onClick={() => onSelectPlotModal(selected)}
+                      >
+                        🔍 Open Plot #{selected.label} Detailed Modal
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div style={{
+                    background: 'rgba(220, 38, 38, 0.1)',
+                    border: '1px solid rgba(220, 38, 38, 0.3)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontSize: '0.8125rem',
+                    textAlign: 'center',
+                    color: '#ef4444'
+                  }}>
+                    <div>⚠️ <strong>Plot #{selected.label} is {STATUS_LABELS[selected.status]}</strong></div>
+                    <div style={{ color: 'var(--pv-text-muted)', fontSize: '0.75rem', marginTop: 4 }}>
+                      Online booking is unavailable for this plot.
+                    </div>
+                    <button
+                      className="pv-btn-outline pv-btn-sm"
+                      style={{ marginTop: 8, width: '100%', justifyContent: 'center' }}
+                      onClick={() => {
+                        const firstAvail = plots.find(p => p.status === 'available');
+                        if (firstAvail) setSelected(firstAvail);
+                      }}
+                    >
+                      Explore Available Plots (🟢)
+                    </button>
+                  </div>
+                )}
+
+                {/* Demo Status changer */}
+                <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--pv-navy-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--pv-text-muted)' }}>
+                  <span>Demo Status:</span>
+                  <select
+                    value={selected.status}
+                    onChange={(e) => {
+                      onStatusChange(selected.id, e.target.value);
+                      setSelected(prev => ({ ...prev, status: e.target.value }));
+                    }}
+                    className="pv-filter-select"
+                    style={{ padding: '3px 8px', fontSize: '0.75rem' }}
+                  >
+                    <option value="available">Available (🟢)</option>
+                    <option value="booked">Booked (🟡)</option>
+                    <option value="sold">Sold (🔴)</option>
+                    <option value="blocked">Held / Blocked (🟣)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="pv-layout-inspector" style={{ textAlign: 'center', padding: '2rem' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>🗺️</div>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: 800 }}>Select a Plot on the Map</h3>
+              <p style={{ color: 'var(--pv-text-muted)', fontSize: '0.8125rem', lineHeight: 1.6 }}>
+                Click any plot number on the masterplan layout to view dimensions, facing, road width, pricing, and book online.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── 5. Layout Engineering Standards ── */}
+      <div style={{ marginTop: '3rem' }}>
+        <h2 className="pv-title" style={{ fontSize: '1.4rem', marginBottom: 8 }}>
+          Layout Engineering Standards & Infrastructure
+        </h2>
+        <p style={{ color: 'var(--pv-text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+          Every square yard developed with certified high-grade infrastructure and verified statutory government approvals.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+          <div className="pv-spec-box">
+            <strong>🛣️ 40ft & 33ft BT Roads</strong>
+            <p>Designed with heavy-duty wet mix macadam sub-base and machine-laid asphalt with precast kerb stones.</p>
+          </div>
+          <div className="pv-spec-box">
+            <strong>💧 Underground Drainage & Water</strong>
+            <p>Concealed UGD pipes with manholes, connected to STP. Overhead water tank with individual plot tap.</p>
+          </div>
+          <div className="pv-spec-box">
+            <strong>⚡ Concealed Electrical Grid</strong>
+            <p>Underground cabling, dedicated transformers, and designer warm-white LED street poles.</p>
+          </div>
+          <div className="pv-spec-box">
+            <strong>🛡️ Gated Compound & Solar Fence</strong>
+            <p>6-foot precast concrete boundary wall with solar security fencing and 24x7 security surveillance.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main PlotVenture Demo Application ────────────────────────────────────────
 export default function PlotVentureDemo() {
   const [activePage, setActivePage] = useState(() => {
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search).get('page');
-      if (p) return p;
+      if (p) {
+        if (p === 'amenities' || p === 'location') return 'highlights';
+        return p;
+      }
     }
     return 'home';
   });
@@ -25,34 +1491,113 @@ export default function PlotVentureDemo() {
   const [lightboxImg, setLightboxImg] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const [previewMode, setPreviewMode] = useState('web');
+  const screenRef = useRef(null);
+
+  // Real-time dynamic plots per project
+  const [plotsByProject, setPlotsByProject] = useState(() => ({
+    'green-county-elite': generateVenturePlots('green-county-elite'),
+    'royal-palms-boulevard': generateVenturePlots('royal-palms-boulevard'),
+    'serene-valley-county': generateVenturePlots('serene-valley-county'),
+  }));
+
+  // Modals state
+  const [brochureProject, setBrochureProject] = useState(null);
+  const [showBrochuresListModal, setShowBrochuresListModal] = useState(false);
+  const [visitProject, setVisitProject] = useState(null);
+  const [visitDefaultPlot, setVisitDefaultPlot] = useState(null);
+  const [selectedPlotForModal, setSelectedPlotForModal] = useState(null);
+  const [siteVisits, setSiteVisits] = useState([]);
+
   // Active project data
   const currentProject = useMemo(() => {
     return PROJECTS.find(p => p.id === selectedProjectId) || PROJECTS[0];
   }, [selectedProjectId]);
 
+  const currentProjectPlots = plotsByProject[selectedProjectId] || generateVenturePlots(selectedProjectId);
+
   const navToPage = (pageId, projId = null) => {
     setActivePage(pageId);
     if (projId) setSelectedProjectId(projId);
     setMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (previewMode !== 'web' && screenRef.current) {
+      screenRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
+
+  function handleStatusChange(plotId, newStatus) {
+    setPlotsByProject(prev => {
+      const projId = selectedProjectId;
+      const list = prev[projId] || generateVenturePlots(projId);
+      const updated = list.map(p => (p.id === plotId ? { ...p, status: newStatus } : p));
+      return { ...prev, [projId]: updated };
+    });
+  }
+
+  function handleBookingSuccess(newVisit) {
+    setSiteVisits(prev => [newVisit, ...prev]);
+  }
+
+  function handleOpenBrochure(proj) {
+    setBrochureProject(proj || currentProject || PROJECTS[0]);
+  }
+
+  function handleOpenVisit(proj, plot = null) {
+    setVisitProject(proj || currentProject || PROJECTS[0]);
+    setVisitDefaultPlot(plot);
+  }
+
+  function handleOpenLayout(projId) {
+    if (projId) setSelectedProjectId(projId);
+    navToPage('layout', projId);
+  }
 
   const waContactNumber = siteConfig.whatsapp.replace(/\D/g, '');
   const waDirectUrl = (msg) =>
     `https://wa.me/${waContactNumber}?text=${encodeURIComponent(msg || "Hi PlotVenture! I'm interested in booking a site visit for residential plots.")}`;
 
+  const NAV_ITEMS = [
+    { id: 'home', label: 'Home' },
+    { id: 'about', label: 'About Us' },
+    { id: 'projects', label: 'Projects' },
+    { id: 'layout', label: 'Layout Map' },
+    { id: 'details', label: 'Project Details' },
+    { id: 'highlights', label: 'Highlights' },
+    { id: 'gallery', label: 'Gallery' },
+    { id: 'contact', label: 'Contact Us' },
+  ];
+
   return (
-    <div className="pv-demo">
-      {/* ── Demo Bar for Theme Toggle & DeccanIDentity Navigation ── */}
+    <div className={`pv-preview-shell pv-preview-shell--${previewMode}`}>
+      {/* ── Demo Bar for Theme Toggle & DeccanIDentity Navigation (Fixed Across Full Width) ── */}
       <DemoBar
         templateSlug="plotventure"
         templateName="PlotVenture"
         label="📐 PlotVenture — Modern Plotted Development Website"
+        previewMode={previewMode}
+        onPreviewModeChange={setPreviewMode}
       />
 
-      {/* ── Main PlotVenture Header ── */}
-      <header className="pv-nav" role="banner">
-        <div className="pv-nav__container">
+      <div className={`pv-preview-stage pv-preview-stage--${previewMode} ${previewMode !== 'web' ? 'pv-preview-stage--framed' : ''}`}>
+        <div className={`pv-device-frame pv-device-frame--${previewMode}`}>
+          {previewMode === 'mobile' && (
+            <div className="pv-device-notch" aria-hidden="true">
+              <span className="pv-device-camera" />
+              <span className="pv-device-speaker" />
+            </div>
+          )}
+          {previewMode === 'tab' && (
+            <div className="pv-device-tablet-cam" aria-hidden="true">
+              <span className="pv-device-camera" />
+            </div>
+          )}
+          <div className="pv-device-screen" ref={screenRef}>
+            <div className="pv-demo">
+              {/* ── Main PlotVenture Header ── */}
+              <header className="pv-nav" role="banner">
+                <div className="pv-nav__container">
           <button
             className="pv-brand"
             onClick={() => navToPage('home')}
@@ -70,19 +1615,10 @@ export default function PlotVentureDemo() {
           {/* Desktop Navigation */}
           <nav aria-label="Main Navigation">
             <ul className="pv-nav__links">
-              {[
-                { id: 'home', label: 'Home' },
-                { id: 'about', label: 'About Us' },
-                { id: 'projects', label: 'Projects' },
-                { id: 'details', label: 'Project Details' },
-                { id: 'amenities', label: 'Amenities' },
-                { id: 'gallery', label: 'Gallery' },
-                { id: 'location', label: 'Location' },
-                { id: 'contact', label: 'Contact Us' },
-              ].map(item => (
+              {NAV_ITEMS.map(item => (
                 <li key={item.id}>
                   <button
-                    className={`pv-nav__link-btn ${activePage === item.id ? 'active' : ''}`}
+                    className={`pv-nav__link-btn ${activePage === item.id || (item.id === 'highlights' && (activePage === 'amenities' || activePage === 'location')) ? 'active' : ''}`}
                     onClick={() => navToPage(item.id)}
                     aria-current={activePage === item.id ? 'page' : undefined}
                   >
@@ -94,74 +1630,110 @@ export default function PlotVentureDemo() {
           </nav>
 
           {/* Header Action Buttons */}
-          <div className="pv-nav__actions">
+          <div className="pv-nav__actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              className="pv-btn-gold pv-nav__btn-sm pv-nav__visit-btn"
+              onClick={() => handleOpenVisit(currentProject)}
+              aria-label="Schedule a site visit"
+            >
+              🚗 Book a Visit
+            </button>
             <a
               href={waDirectUrl("Hello! I want to enquire about PlotVenture's plots.")}
               target="_blank"
               rel="noreferrer"
-              className="pv-btn-gold pv-nav__cta-desktop"
+              className="pv-btn-gold pv-nav__btn-sm pv-nav__cta-desktop"
               aria-label="WhatsApp Enquiry"
             >
               <span>💬</span> WhatsApp
             </a>
+            {/* Three Horizontal Lines Hamburger Button for Responsive Screens */}
             <button
-              className="pv-nav__toggle"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle mobile menu"
+              className={`pv-nav__hamburger ${mobileMenuOpen ? 'open' : ''}`}
+              onClick={() => setMobileMenuOpen(prev => !prev)}
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              aria-expanded={mobileMenuOpen}
             >
-              ☰
+              <span className="pv-hamburger-bar"></span>
+              <span className="pv-hamburger-bar"></span>
+              <span className="pv-hamburger-bar"></span>
             </button>
           </div>
         </div>
       </header>
 
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className="pv-mobile-drawer" onClick={() => setMobileMenuOpen(false)}>
-          <div className="pv-mobile-drawer__panel" onClick={e => e.stopPropagation()}>
+      {/* Mobile & Tablet Responsive Navigation Drawer Overlay */}
+      <div
+        className={`pv-mobile-drawer-overlay ${mobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden={!mobileMenuOpen}
+      >
+        <div className="pv-mobile-drawer" onClick={e => e.stopPropagation()}>
+          <div className="pv-mobile-drawer__header">
+            <div className="pv-brand">
+              <div className="pv-brand__logo-icon">PV</div>
+              <div className="pv-brand__text">
+                <span className="pv-brand__name">
+                  Plot<span>Venture</span>
+                </span>
+                <span className="pv-brand__sub">Plotted Developments</span>
+              </div>
+            </div>
             <button
               className="pv-mobile-drawer__close"
               onClick={() => setMobileMenuOpen(false)}
-              aria-label="Close menu"
+              aria-label="Close navigation menu"
             >
               ✕
             </button>
-            <div className="pv-brand" style={{ marginBottom: '1rem' }}>
-              <div className="pv-brand__logo-icon">PV</div>
-              <div className="pv-brand__name">
-                Plot<span>Venture</span>
-              </div>
-            </div>
-            {[
-              { id: 'home', label: 'Home' },
-              { id: 'about', label: 'About Us' },
-              { id: 'projects', label: 'Projects' },
-              { id: 'details', label: 'Project Details' },
-              { id: 'amenities', label: 'Amenities' },
-              { id: 'gallery', label: 'Gallery' },
-              { id: 'location', label: 'Location' },
-              { id: 'contact', label: 'Contact Us' },
-            ].map(item => (
+          </div>
+
+          <nav className="pv-mobile-drawer__nav" aria-label="Mobile Navigation">
+            {NAV_ITEMS.map(item => (
               <button
                 key={item.id}
-                className={`pv-mobile-drawer__btn ${activePage === item.id ? 'active' : ''}`}
+                className={`pv-mobile-drawer__btn ${activePage === item.id || (item.id === 'highlights' && (activePage === 'amenities' || activePage === 'location')) ? 'active' : ''}`}
                 onClick={() => navToPage(item.id)}
               >
-                {item.label}
+                <span>{item.label}</span>
+                <span>→</span>
               </button>
             ))}
+          </nav>
+
+          <div className="pv-mobile-drawer__footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button
+              className="pv-btn-outline"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setShowBrochuresListModal(true);
+              }}
+            >
+              📥 All Venture Brochures
+            </button>
+            <button
+              className="pv-btn-gold"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleOpenVisit(currentProject);
+              }}
+            >
+              🚗 Schedule Free Site Visit
+            </button>
             <a
               href={waDirectUrl()}
               target="_blank"
               rel="noreferrer"
-              className="pv-btn-gold"
-              style={{ marginTop: 'auto', textAlign: 'center', justifyContent: 'center' }}
+              className="pv-btn-outline"
+              style={{ width: '100%', justifyContent: 'center' }}
             >
               💬 WhatsApp Enquiry
             </a>
           </div>
         </div>
-      )}
+      </div>
 
       {/* ── Active Page View ── */}
       <main className="pv-content-area" id="pv-main-content">
@@ -170,6 +1742,9 @@ export default function PlotVentureDemo() {
             navToPage={navToPage}
             waDirectUrl={waDirectUrl}
             onSelectProject={id => navToPage('details', id)}
+            onOpenLayout={handleOpenLayout}
+            onOpenBrochure={handleOpenBrochure}
+            onOpenVisit={handleOpenVisit}
             onOpenLightbox={setLightboxImg}
           />
         )}
@@ -177,7 +1752,23 @@ export default function PlotVentureDemo() {
         {activePage === 'projects' && (
           <ProjectsPage
             onSelectProject={id => navToPage('details', id)}
+            onOpenLayout={handleOpenLayout}
+            onOpenBrochure={handleOpenBrochure}
+            onOpenVisit={handleOpenVisit}
             navToPage={navToPage}
+          />
+        )}
+
+        {activePage === 'layout' && (
+          <LayoutPage
+            activeProject={currentProject}
+            onSelectProject={id => setSelectedProjectId(id)}
+            plots={currentProjectPlots}
+            onStatusChange={handleStatusChange}
+            onBookVisit={handleOpenVisit}
+            onOpenBrochure={handleOpenBrochure}
+            onOpenBrochuresList={() => setShowBrochuresListModal(true)}
+            onSelectPlotModal={setSelectedPlotForModal}
           />
         )}
 
@@ -186,6 +1777,9 @@ export default function PlotVentureDemo() {
             project={currentProject}
             allProjects={PROJECTS}
             onSelectProject={setSelectedProjectId}
+            onOpenLayout={handleOpenLayout}
+            onOpenBrochure={handleOpenBrochure}
+            onOpenVisit={handleOpenVisit}
             waDirectUrl={waDirectUrl}
             navToPage={navToPage}
           />
@@ -195,16 +1789,26 @@ export default function PlotVentureDemo() {
           <AboutPage navToPage={navToPage} waDirectUrl={waDirectUrl} />
         )}
 
-        {activePage === 'amenities' && (
-          <AmenitiesPage navToPage={navToPage} waDirectUrl={waDirectUrl} />
+        {(activePage === 'highlights' || activePage === 'amenities' || activePage === 'location') && (
+          <div>
+            <div style={{ textAlign: 'center', maxWidth: '720px', margin: '3rem auto 1rem', padding: '0 1rem' }}>
+              <span className="pv-badge" style={{ marginBottom: '0.75rem' }}>
+                🌟 Signature Living &amp; Strategic Connectivity
+              </span>
+              <h1 className="pv-title" style={{ fontSize: 'clamp(2rem, 4vw, 2.75rem)', margin: '0.5rem 0' }}>
+                Highlights
+              </h1>
+              <p className="pv-subtitle" style={{ margin: '0 auto' }}>
+                Complete township infrastructure, clubhouse amenities, and high-growth strategic connectivity advantages.
+              </p>
+            </div>
+            <AmenitiesPage navToPage={navToPage} waDirectUrl={waDirectUrl} />
+            <LocationPage navToPage={navToPage} waDirectUrl={waDirectUrl} />
+          </div>
         )}
 
         {activePage === 'gallery' && (
           <GalleryPage onOpenLightbox={setLightboxImg} />
-        )}
-
-        {activePage === 'location' && (
-          <LocationPage navToPage={navToPage} waDirectUrl={waDirectUrl} />
         )}
 
         {activePage === 'contact' && (
@@ -214,35 +1818,6 @@ export default function PlotVentureDemo() {
           />
         )}
       </main>
-
-      {/* ── Lightbox Modal for Gallery & Photos ── */}
-      {lightboxImg && (
-        <div
-          className="pv-lightbox"
-          onClick={() => setLightboxImg(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="pv-lightbox__content" onClick={e => e.stopPropagation()}>
-            <button
-              className="pv-lightbox__close"
-              onClick={() => setLightboxImg(null)}
-              aria-label="Close lightbox"
-            >
-              ×
-            </button>
-            <img
-              src={lightboxImg.src}
-              alt={lightboxImg.title}
-              className="pv-lightbox__img"
-            />
-            <div className="pv-lightbox__caption">
-              <h4>{lightboxImg.title}</h4>
-              <p>{lightboxImg.caption || lightboxImg.category}</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Footer ── */}
       <footer className="pv-footer" role="contentinfo">
@@ -277,10 +1852,10 @@ export default function PlotVentureDemo() {
                 { id: 'home', label: 'Home' },
                 { id: 'about', label: 'About Us' },
                 { id: 'projects', label: 'Plotted Projects' },
+                { id: 'layout', label: 'Layout Map' },
                 { id: 'details', label: 'Project Master Plans' },
-                { id: 'amenities', label: 'Township Amenities' },
+                { id: 'highlights', label: 'Highlights' },
                 { id: 'gallery', label: 'Photo Gallery' },
-                { id: 'location', label: 'Location Advantages' },
               ].map(link => (
                 <li key={link.id}>
                   <button
@@ -339,17 +1914,104 @@ export default function PlotVentureDemo() {
           <div>
             © 2026 PlotVenture — Modern Plotted Development. Developed as a showcase template for <Link to="/" style={{ color: 'var(--pv-gold)', textDecoration: 'underline' }}>DeccanIDentity</Link>.
           </div>
-          <div style={{ fontSize: '0.75rem' }}>
-            {COMPANY_INFO.reraNotice}
+          <div>
+            <span style={{ fontSize: '0.75rem' }}>{COMPANY_INFO.reraNotice}</span>
           </div>
         </div>
       </footer>
+            </div>{/* .pv-demo */}
+          </div>{/* .pv-device-screen */}
+        </div>{/* .pv-device-frame */}
+      </div>{/* .pv-preview-stage */}
+
+      {/* ── Lightbox Modal for Gallery & Photos ── */}
+      {lightboxImg && (
+        <div
+          className="pv-lightbox"
+          onClick={() => setLightboxImg(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="pv-lightbox__content" onClick={e => e.stopPropagation()}>
+            <button
+              className="pv-lightbox__close"
+              onClick={() => setLightboxImg(null)}
+              aria-label="Close lightbox"
+            >
+              ×
+            </button>
+            <img
+              src={lightboxImg.src}
+              alt={lightboxImg.title}
+              className="pv-lightbox__img"
+            />
+            <div className="pv-lightbox__caption">
+              <h4>{lightboxImg.title}</h4>
+              <p>{lightboxImg.caption || lightboxImg.category}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modals: Brochures, Site Visit, Plot Details, Admin Manager ── */}
+      {showBrochuresListModal && (
+        <BrochuresListModal
+          onClose={() => setShowBrochuresListModal(false)}
+          onViewBrochure={(proj) => {
+            setShowBrochuresListModal(false);
+            setBrochureProject(proj);
+          }}
+        />
+      )}
+
+      {brochureProject && (
+        <BrochureModal
+          project={brochureProject}
+          onClose={() => setBrochureProject(null)}
+        />
+      )}
+
+      {visitProject && (
+        <SiteVisitModal
+          project={visitProject}
+          defaultPlot={visitDefaultPlot}
+          onClose={() => {
+            setVisitProject(null);
+            setVisitDefaultPlot(null);
+          }}
+          onBookingSuccess={handleBookingSuccess}
+        />
+      )}
+
+      {selectedPlotForModal && (
+        <PlotModal
+          plot={selectedPlotForModal}
+          project={currentProject}
+          onClose={() => setSelectedPlotForModal(null)}
+          onEnquire={(p) => {
+            const text = `Hi, I am interested in Plot #${p.id} (${p.sqYards} Sq.Yds, ${p.facing} facing) at ${currentProject.name}.`;
+            window.open(waDirectUrl(text), '_blank');
+          }}
+          onBookVisit={(p) => handleOpenVisit(currentProject, p)}
+          onStatusChange={handleStatusChange}
+        />
+      )}
+
+
     </div>
   );
 }
 
 // ─── 1. Home Page Component ──────────────────────────────────────────────────
-function HomePage({ navToPage, waDirectUrl, onSelectProject, onOpenLightbox }) {
+function HomePage({
+  navToPage,
+  waDirectUrl,
+  onSelectProject,
+  onOpenLayout,
+  onOpenBrochure,
+  onOpenVisit,
+  onOpenLightbox,
+}) {
   const [formDone, setFormDone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lead, setLead] = useState({ name: '', phone: '', project: 'Green County Elite' });
@@ -399,7 +2061,7 @@ function HomePage({ navToPage, waDirectUrl, onSelectProject, onOpenLightbox }) {
               </button>
               <button
                 className="pv-btn-outline"
-                onClick={() => navToPage('contact')}
+                onClick={() => (onOpenVisit ? onOpenVisit() : navToPage('contact'))}
               >
                 📅 Schedule Free Site Visit
               </button>
@@ -547,18 +2209,37 @@ function HomePage({ navToPage, waDirectUrl, onSelectProject, onOpenLightbox }) {
                   </div>
                 </div>
 
-                <div className="pv-pcard__footer">
-                  <div className="pv-pcard__price">
-                    <span>Starting From</span>
-                    <strong>{p.minPrice}</strong>
+                <div className="pv-pcard__footer" style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', alignItems: 'stretch' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="pv-pcard__price">
+                      <span>Starting From</span>
+                      <strong>{p.minPrice}</strong>
+                    </div>
+                    <button
+                      className="pv-btn-gold"
+                      onClick={() => onSelectProject(p.id)}
+                      aria-label={`View details for ${p.name}`}
+                      style={{ padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
+                    >
+                      View Details →
+                    </button>
                   </div>
-                  <button
-                    className="pv-btn-gold"
-                    onClick={() => onSelectProject(p.id)}
-                    aria-label={`View details for ${p.name}`}
-                  >
-                    View Details →
-                  </button>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                    <button
+                      className="pv-btn-outline"
+                      style={{ padding: '0.4rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                      onClick={() => (onOpenLayout ? onOpenLayout(p.id) : navToPage('layout', p.id))}
+                    >
+                      🗺️ Masterplan
+                    </button>
+                    <button
+                      className="pv-btn-outline"
+                      style={{ padding: '0.4rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                      onClick={() => (onOpenBrochure ? onOpenBrochure(p) : downloadProjectBrochure(p))}
+                    >
+                      📥 Brochure
+                    </button>
+                  </div>
                 </div>
               </div>
             </article>
@@ -590,7 +2271,7 @@ function HomePage({ navToPage, waDirectUrl, onSelectProject, onOpenLightbox }) {
         <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
           <button
             className="pv-btn-outline"
-            onClick={() => navToPage('amenities')}
+            onClick={() => navToPage('highlights')}
           >
             Explore All 8+ Township Amenities →
           </button>
@@ -631,7 +2312,7 @@ function HomePage({ navToPage, waDirectUrl, onSelectProject, onOpenLightbox }) {
             </p>
             <button
               className="pv-btn-gold"
-              onClick={() => navToPage('location')}
+              onClick={() => navToPage('highlights')}
             >
               View Route Map &amp; Distances →
             </button>
@@ -679,7 +2360,7 @@ function HomePage({ navToPage, waDirectUrl, onSelectProject, onOpenLightbox }) {
 }
 
 // ─── 2. Projects Page Component ──────────────────────────────────────────────
-function ProjectsPage({ onSelectProject, navToPage }) {
+function ProjectsPage({ onSelectProject, onOpenLayout, onOpenBrochure, onOpenVisit, navToPage }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [sizeFilter, setSizeFilter] = useState('All');
@@ -815,17 +2496,36 @@ function ProjectsPage({ onSelectProject, navToPage }) {
                   </div>
                 </div>
 
-                <div className="pv-pcard__footer">
-                  <div className="pv-pcard__price">
-                    <span>Indicative Price</span>
-                    <strong>{p.minPrice}</strong>
+                <div className="pv-pcard__footer" style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', alignItems: 'stretch' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="pv-pcard__price">
+                      <span>Indicative Price</span>
+                      <strong>{p.minPrice}</strong>
+                    </div>
+                    <button
+                      className="pv-btn-gold"
+                      onClick={() => onSelectProject(p.id)}
+                      style={{ padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
+                    >
+                      View Details →
+                    </button>
                   </div>
-                  <button
-                    className="pv-btn-gold"
-                    onClick={() => onSelectProject(p.id)}
-                  >
-                    View Details →
-                  </button>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                    <button
+                      className="pv-btn-outline"
+                      style={{ padding: '0.4rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                      onClick={() => (onOpenLayout ? onOpenLayout(p.id) : navToPage('layout', p.id))}
+                    >
+                      🗺️ Layout Map
+                    </button>
+                    <button
+                      className="pv-btn-outline"
+                      style={{ padding: '0.4rem', fontSize: '0.78rem', justifyContent: 'center' }}
+                      onClick={() => (onOpenBrochure ? onOpenBrochure(p) : downloadProjectBrochure(p))}
+                    >
+                      📥 Brochure
+                    </button>
+                  </div>
                 </div>
               </div>
             </article>
@@ -846,7 +2546,7 @@ function ProjectsPage({ onSelectProject, navToPage }) {
         <p style={{ color: 'var(--pv-text-muted)', maxWidth: '600px', margin: '0 auto 1.5rem' }}>
           Contact our land acquisition and layout planners to explore bespoke plot configurations and commercial plots.
         </p>
-        <button className="pv-btn-gold" onClick={() => navToPage('contact')}>
+        <button className="pv-btn-gold" onClick={() => (onOpenVisit ? onOpenVisit() : navToPage('contact'))}>
           Contact Land Specialist →
         </button>
       </div>
@@ -855,9 +2555,17 @@ function ProjectsPage({ onSelectProject, navToPage }) {
 }
 
 // ─── 3. Project Details Page Component ───────────────────────────────────────
-function ProjectDetailsPage({ project, allProjects, onSelectProject, waDirectUrl, navToPage }) {
+function ProjectDetailsPage({
+  project,
+  allProjects,
+  onSelectProject,
+  onOpenLayout,
+  onOpenBrochure,
+  onOpenVisit,
+  waDirectUrl,
+  navToPage,
+}) {
   const [calcSqYds, setCalcSqYds] = useState(200);
-  const [brochureRequested, setBrochureRequested] = useState(false);
 
   const estimatedCost = useMemo(() => {
     return (calcSqYds * project.ratePerSqYd).toLocaleString();
@@ -903,21 +2611,28 @@ function ProjectDetailsPage({ project, allProjects, onSelectProject, waDirectUrl
                 Rate: <strong>₹{project.ratePerSqYd.toLocaleString()}</strong> / Sq.Yd*
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <button
+                  className="pv-btn-gold"
+                  style={{ textAlign: 'center', justifyContent: 'center' }}
+                  onClick={() => (onOpenLayout ? onOpenLayout(project.id) : navToPage('layout', project.id))}
+                >
+                  🗺️ Interactive Masterplan
+                </button>
+                <button
+                  className="pv-btn-outline"
+                  onClick={() => (onOpenVisit ? onOpenVisit(project) : navToPage('contact'))}
+                >
+                  🚗 Schedule Free Site Visit
+                </button>
                 <a
                   href={waDirectUrl(`Hi PlotVenture, please share price sheet & availability for ${project.name}.`)}
                   target="_blank"
                   rel="noreferrer"
-                  className="pv-btn-gold"
+                  className="pv-btn-outline"
                   style={{ textAlign: 'center', justifyContent: 'center' }}
                 >
                   💬 WhatsApp Price Sheet
                 </a>
-                <button
-                  className="pv-btn-outline"
-                  onClick={() => navToPage('contact')}
-                >
-                  Book Site Visit
-                </button>
               </div>
             </div>
           </div>
@@ -979,7 +2694,7 @@ function ProjectDetailsPage({ project, allProjects, onSelectProject, waDirectUrl
             <button
               className="pv-btn-gold"
               style={{ width: '100%', justifyContent: 'center' }}
-              onClick={() => navToPage('contact')}
+              onClick={() => (onOpenVisit ? onOpenVisit(project) : navToPage('contact'))}
             >
               Get Detailed Payment Schedule →
             </button>
@@ -997,20 +2712,21 @@ function ProjectDetailsPage({ project, allProjects, onSelectProject, waDirectUrl
               ))}
             </ul>
 
-            <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--pv-navy-border)' }}>
-              {brochureRequested ? (
-                <div className="pv-alert pv-alert--success" style={{ fontSize: '0.8rem' }}>
-                  ✓ Brochure download link sent to your WhatsApp!
-                </div>
-              ) : (
-                <button
-                  className="pv-btn-outline"
-                  style={{ width: '100%', justifyContent: 'center' }}
-                  onClick={() => setBrochureRequested(true)}
-                >
-                  📥 Download Sanctioned Layout Brochure (PDF)
-                </button>
-              )}
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--pv-navy-border)', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+              <button
+                className="pv-btn-gold"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => (onOpenLayout ? onOpenLayout(project.id) : navToPage('layout', project.id))}
+              >
+                🗺️ Explore Interactive Plot Masterplan
+              </button>
+              <button
+                className="pv-btn-outline"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => (onOpenBrochure ? onOpenBrochure(project) : downloadProjectBrochure(project))}
+              >
+                📥 Download Sanctioned Layout Brochure (Instant)
+              </button>
             </div>
           </div>
         </div>

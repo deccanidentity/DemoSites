@@ -11,6 +11,20 @@ export const COMPANY_INFO = {
   reraNotice: 'All layouts adhere to local town planning approvals. RERA registration details & sanction letters available on request at our sales galleries.',
 };
 
+export const STATUS_COLORS = {
+  available: '#16a34a',
+  booked: '#ca8a04',
+  sold: '#dc2626',
+  blocked: '#7c3aed',
+};
+
+export const STATUS_LABELS = {
+  available: 'Available',
+  booked: 'Booked',
+  sold: 'Sold',
+  blocked: 'Held / Blocked',
+};
+
 export const PROJECTS = [
   {
     id: 'green-county-elite',
@@ -18,6 +32,8 @@ export const PROJECTS = [
     tagline: 'Luxury Gated Plotted Township on Growth Corridor',
     location: 'Near Adibatla & ORR Exit 12, Hyderabad',
     category: 'Gated Layouts',
+    stage: 'ongoing',
+    stageLabel: 'Ongoing Development',
     totalAcres: '42 Acres',
     totalPlots: 380,
     availablePlots: 38,
@@ -26,8 +42,22 @@ export const PROJECTS = [
     ratePerSqYd: 19500,
     status: 'Fast Selling',
     approval: 'HMDA & RERA Approved Layout',
+    approvalDetails: 'HMDA LP No. 000412/LO/Plg/HMDA/2023 · RERA Reg: P02400006214',
     image: '/images/plotventure-hero.jpg',
     description: 'Green County Elite is a masterfully planned 42-acre residential layout offering crystal clear title plots with blacktop roads, underground electrical cabling, avenue plantation, and a full-fledged clubhouse.',
+    roads: '40-ft & 30-ft Wide Blacktop Roads with Kerb Stones',
+    utilities: 'Underground Drainage, Concealed Power Grid, Overhead Water Tank & STP',
+    completedFacilities: [
+      'Iconic Entrance Archway with 24x7 Security Cabin & Smart Boom Barriers',
+      '40-ft Main Boulevard & 30-ft Internal BT Roads with Kerbs',
+      'Solar-Fenced Outer Compound Wall with Guard Posts',
+      'Concealed Underground Drainage & Individual Water Tap Connections',
+    ],
+    locationAdvantages: [
+      { landmark: 'Outer Ring Road (ORR) Exit 12', dist: '5 mins' },
+      { landmark: 'Adibatla TCS & Aerospace SEZ', dist: '10 mins' },
+      { landmark: 'RGIA International Airport', dist: '18 mins' },
+    ],
     highlights: [
       '100% Vaastu Compliant Layout',
       '40-ft & 30-ft Wide Blacktop Roads',
@@ -53,6 +83,8 @@ export const PROJECTS = [
     tagline: 'Premium Avenue Plotted Community With Palm Verges',
     location: 'Bengaluru Highway (NH-44), Hyderabad Growth Hub',
     category: 'Highway Enclaves',
+    stage: 'upcoming',
+    stageLabel: 'New Launch · Pre-Booking',
     totalAcres: '28 Acres',
     totalPlots: 240,
     availablePlots: 64,
@@ -61,8 +93,22 @@ export const PROJECTS = [
     ratePerSqYd: 22500,
     status: 'New Launch',
     approval: 'DTCP & RERA Approved Layout',
+    approvalDetails: 'DTCP LP No. 089/2024/H · RERA Reg: P02400007831',
     image: '/images/plotventure-avenue.jpg',
     description: 'Located directly off the prestigious National Highway corridor, Royal Palms Boulevard features majestic palm-lined avenues, LED street lighting, designer curb stones, and rapid access to Hyderabad International Airport.',
+    roads: '60-ft Main Boulevard & 33-ft Internal Avenue Roads',
+    utilities: 'Underground Power Cabling, Stormwater Channels, Central Water Network',
+    completedFacilities: [
+      'Direct Highway Frontage & Service Road Entry Portico',
+      '60-ft Main Boulevard with Royal Palm Medians',
+      'Children Adventure Park & Outdoor Fitness Arena',
+      'Complete Perimeter Wall with Solar Security Fencing',
+    ],
+    locationAdvantages: [
+      { landmark: 'Direct National Highway 44 Frontage', dist: '0 mins' },
+      { landmark: 'Rajiv Gandhi International Airport (RGIA)', dist: '15 mins' },
+      { landmark: 'Shamshabad Junction & Metro Station', dist: '18 mins' },
+    ],
     highlights: [
       'Direct Highway Frontage & Service Road Access',
       '60-ft Main Boulevard & 33-ft Internal Roads',
@@ -86,6 +132,8 @@ export const PROJECTS = [
     tagline: 'Resort-Themed Plotted Retreat with Luxury Clubhouse',
     location: 'Shankarpally - Mokila Corridor, Hyderabad',
     category: 'Luxury Farm Plots',
+    stage: 'completed',
+    stageLabel: 'Ready for Registration',
     totalAcres: '35 Acres',
     totalPlots: 190,
     availablePlots: 16,
@@ -94,8 +142,22 @@ export const PROJECTS = [
     ratePerSqYd: 19000,
     status: 'Ready for Registration',
     approval: 'HMDA & RERA Approved Layout',
+    approvalDetails: 'HMDA LP No. 000215/LO/Plg/HMDA/2023 · RERA Reg: P02400005432',
     image: '/images/plotventure-clubhouse.jpg',
     description: 'Serene Valley offers spacious villa plots nestled amid pristine green surroundings. Features a 15,000 sq.ft luxury clubhouse, half-Olympic pool, tennis court, fruit orchards, and world-class leisure facilities.',
+    roads: '50-ft Grand Entrance Boulevard & 33-ft Country Avenues',
+    utilities: '15,000 Sq.Ft Contemporary Clubhouse, STP, Central Water Sump & Fiber Optic Grid',
+    completedFacilities: [
+      '15,000 Sq.Ft Clubhouse with Swimming Pool & Gymnasium',
+      'Tennis & Half Basketball Courts with Floodlights',
+      'Organic Fruit Orchard & Shaded Gazebo Walkways',
+      'Round-the-clock Manned Security & Full CCTV Surveillance',
+    ],
+    locationAdvantages: [
+      { landmark: 'Mokila Residential Belt', dist: '8 mins' },
+      { landmark: 'Neopolis & Financial District', dist: '25 mins' },
+      { landmark: 'Shankarpally Railway Junction', dist: '5 mins' },
+    ],
     highlights: [
       '15,000 Sq.Ft Contemporary Clubhouse',
       'Swimming Pool with Sunken Lounges',
@@ -113,6 +175,321 @@ export const PROJECTS = [
     ],
   },
 ];
+
+// ─── PlotVenture Layout Visual Configurations ─────────────────────────────────
+export const PV_LAYOUT_CONFIG = {
+  'green-county-elite': {
+    projectId: 'green-county-elite',
+    name: 'Green County Elite',
+    location: 'Near Adibatla & ORR Exit 12, Hyderabad',
+    approvalType: 'HMDA & RERA Approved',
+    approvalDetails: 'HMDA LP No. 000412/LO/Plg/HMDA/2023 · RERA Reg: P02400006214',
+    road1: '40 FT MAIN BOULEVARD ROAD (BLACKTOP WITH CURBS)',
+    road2: '33 FT CENTRAL AVENUE ROAD',
+    road3: '30 FT CROSS STREET',
+    gateLabel: 'GRAND ENTRANCE GATEWAY (24x7 SECURITY) →',
+    centralAmenity: {
+      title: 'CENTRAL',
+      subtitle: 'PARK',
+      emoji: '🌳',
+      bg: 'rgba(22, 163, 74, 0.18)',
+      stroke: 'rgba(22, 163, 74, 0.55)',
+      textFill: '#16a34a',
+    },
+    centralPlaza: {
+      title: 'COMMUNITY',
+      subtitle: 'PLAZA',
+      emoji: '🏛️',
+      bg: 'rgba(245, 158, 11, 0.15)',
+      stroke: 'rgba(245, 158, 11, 0.4)',
+      textFill: '#f59e0b',
+    },
+    utilityYard: {
+      title: 'UTILITY YARD',
+      subtitle: 'OHT & STP',
+      emoji: '💧 ⚡',
+      bg: 'rgba(2, 132, 199, 0.15)',
+      stroke: 'rgba(2, 132, 199, 0.4)',
+      textFill: '#0284c7',
+    },
+    sectors: ['Sector 1 (Emerald)', 'Sector 2 (Diamond)', 'Executive Enclave'],
+    basePricePerYd: 19500,
+    startPlotNumber: 101,
+  },
+  'royal-palms-boulevard': {
+    projectId: 'royal-palms-boulevard',
+    name: 'Royal Palms Boulevard',
+    location: 'Bengaluru Highway (NH-44), Hyderabad Growth Hub',
+    approvalType: 'DTCP & RERA Approved',
+    approvalDetails: 'DTCP LP No. 089/2024/H · RERA Reg: P02400007831',
+    road1: '60 FT HIGHWAY BOULEVARD (WITH PALM MEDIANS)',
+    road2: '40 FT ROYAL PROMENADE',
+    road3: '33 FT PALM AVENUE',
+    gateLabel: 'HIGHWAY PORTICO & SMART ACCESS CONTROL →',
+    centralAmenity: {
+      title: 'ROYAL',
+      subtitle: 'CLUB',
+      emoji: '🌴',
+      bg: 'rgba(245, 158, 11, 0.18)',
+      stroke: 'rgba(245, 158, 11, 0.55)',
+      textFill: '#f59e0b',
+    },
+    centralPlaza: {
+      title: 'SPORTS',
+      subtitle: 'ARENA',
+      emoji: '🏸',
+      bg: 'rgba(124, 58, 237, 0.15)',
+      stroke: 'rgba(124, 58, 237, 0.4)',
+      textFill: '#7c3aed',
+    },
+    utilityYard: {
+      title: 'POWER SUBSTATION',
+      subtitle: 'Dedicated Grid',
+      emoji: '⚡ 💧',
+      bg: 'rgba(2, 132, 199, 0.15)',
+      stroke: 'rgba(2, 132, 199, 0.4)',
+      textFill: '#0284c7',
+    },
+    sectors: ['Avenue Gold', 'Avenue Platinum', 'Highway Promontory'],
+    basePricePerYd: 22500,
+    startPlotNumber: 201,
+  },
+  'serene-valley-county': {
+    projectId: 'serene-valley-county',
+    name: 'Serene Valley Club County',
+    location: 'Shankarpally - Mokila Corridor, Hyderabad',
+    approvalType: 'HMDA & RERA Approved',
+    approvalDetails: 'HMDA LP No. 000215/LO/Plg/HMDA/2023 · RERA Reg: P02400005432',
+    road1: '50 FT GRAND COUNTRY BOULEVARD',
+    road2: '40 FT ORCHARD WAY',
+    road3: '33 FT LAKEVIEW WALK',
+    gateLabel: 'RESORT GATEHOUSE & SECURITY CABIN →',
+    centralAmenity: {
+      title: 'CLUB',
+      subtitle: 'COUNTY',
+      emoji: '🏊‍♂️',
+      bg: 'rgba(2, 132, 199, 0.18)',
+      stroke: 'rgba(2, 132, 199, 0.55)',
+      textFill: '#0284c7',
+    },
+    centralPlaza: {
+      title: 'FRUIT',
+      subtitle: 'ORCHARD',
+      emoji: '🍎',
+      bg: 'rgba(22, 163, 74, 0.15)',
+      stroke: 'rgba(22, 163, 74, 0.4)',
+      textFill: '#16a34a',
+    },
+    utilityYard: {
+      title: 'WATER WORKS',
+      subtitle: 'OHT & Rainwater Sump',
+      emoji: '💧 ☀️',
+      bg: 'rgba(16, 185, 129, 0.15)',
+      stroke: 'rgba(16, 185, 129, 0.4)',
+      textFill: '#10b981',
+    },
+    sectors: ['Valley Front', 'Clubhouse Villas', 'Country Orchard'],
+    basePricePerYd: 19000,
+    startPlotNumber: 301,
+  },
+};
+
+// ─── Generate Venture Plots for Interactive Layout ────────────────────────────
+export function generateVenturePlots(projectId) {
+  const config = PV_LAYOUT_CONFIG[projectId] || PV_LAYOUT_CONFIG['green-county-elite'];
+  const startNum = config.startPlotNumber;
+  const rate = config.basePricePerYd;
+  const sectors = config.sectors;
+
+  const sizePresets = {
+    'green-county-elite': [
+      // Row 1 (8 plots)
+      { area: 165, dim: "33' x 45'", status: 'available' },
+      { area: 165, dim: "33' x 45'", status: 'booked' },
+      { area: 200, dim: "40' x 45'", status: 'available' },
+      { area: 200, dim: "40' x 45'", status: 'sold' },
+      { area: 267, dim: "45' x 53'", status: 'available' },
+      { area: 267, dim: "45' x 53'", status: 'available' },
+      { area: 400, dim: "50' x 72'", status: 'available' },
+      { area: 400, dim: "50' x 72'", status: 'available' },
+      // Row 2 (8 plots)
+      { area: 165, dim: "33' x 45'", status: 'available' },
+      { area: 165, dim: "33' x 45'", status: 'sold' },
+      { area: 200, dim: "40' x 45'", status: 'available' },
+      { area: 200, dim: "40' x 45'", status: 'booked' },
+      { area: 220, dim: "44' x 45'", status: 'available' },
+      { area: 240, dim: "48' x 45'", status: 'available' },
+      { area: 267, dim: "45' x 53'", status: 'blocked' },
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      // Row 3 (8 plots)
+      { area: 165, dim: "33' x 45'", status: 'available' },
+      { area: 200, dim: "40' x 45'", status: 'available' },
+      { area: 200, dim: "40' x 45'", status: 'booked' },
+      { area: 220, dim: "44' x 45'", status: 'available' },
+      { area: 267, dim: "45' x 53'", status: 'available' },
+      { area: 267, dim: "45' x 53'", status: 'sold' },
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      { area: 350, dim: "50' x 63'", status: 'available' },
+      // Row 4 (8 plots)
+      { area: 165, dim: "33' x 45'", status: 'sold' },
+      { area: 180, dim: "36' x 45'", status: 'available' },
+      { area: 200, dim: "40' x 45'", status: 'available' },
+      { area: 220, dim: "44' x 45'", status: 'booked' },
+      { area: 240, dim: "48' x 45'", status: 'available' },
+      { area: 267, dim: "45' x 53'", status: 'available' },
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      { area: 400, dim: "50' x 72'", status: 'available' },
+    ],
+    'royal-palms-boulevard': [
+      // Row 1
+      { area: 200, dim: "36' x 50'", status: 'available' },
+      { area: 200, dim: "36' x 50'", status: 'sold' },
+      { area: 250, dim: "45' x 50'", status: 'available' },
+      { area: 250, dim: "45' x 50'", status: 'available' },
+      { area: 300, dim: "50' x 54'", status: 'booked' },
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      { area: 500, dim: "65' x 70'", status: 'available' },
+      { area: 500, dim: "65' x 70'", status: 'available' },
+      // Row 2
+      { area: 200, dim: "36' x 50'", status: 'available' },
+      { area: 200, dim: "36' x 50'", status: 'sold' },
+      { area: 250, dim: "45' x 50'", status: 'booked' },
+      { area: 250, dim: "45' x 50'", status: 'available' },
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      { area: 350, dim: "50' x 63'", status: 'available' },
+      { area: 400, dim: "60' x 60'", status: 'blocked' },
+      { area: 500, dim: "65' x 70'", status: 'available' },
+      // Row 3
+      { area: 200, dim: "36' x 50'", status: 'available' },
+      { area: 250, dim: "45' x 50'", status: 'available' },
+      { area: 250, dim: "45' x 50'", status: 'sold' },
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      { area: 300, dim: "50' x 54'", status: 'booked' },
+      { area: 350, dim: "50' x 63'", status: 'available' },
+      { area: 400, dim: "60' x 60'", status: 'available' },
+      { area: 450, dim: "60' x 67'", status: 'available' },
+      // Row 4
+      { area: 200, dim: "36' x 50'", status: 'available' },
+      { area: 250, dim: "45' x 50'", status: 'available' },
+      { area: 300, dim: "50' x 54'", status: 'sold' },
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      { area: 350, dim: "50' x 63'", status: 'available' },
+      { area: 400, dim: "60' x 60'", status: 'booked' },
+      { area: 450, dim: "60' x 67'", status: 'available' },
+      { area: 500, dim: "65' x 70'", status: 'available' },
+    ],
+    'serene-valley-county': [
+      // Row 1
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      { area: 300, dim: "50' x 54'", status: 'sold' },
+      { area: 600, dim: "60' x 90'", status: 'available' },
+      { area: 600, dim: "60' x 90'", status: 'available' },
+      { area: 800, dim: "70' x 103'", status: 'booked' },
+      { area: 1000, dim: "80' x 112'", status: 'available' },
+      { area: 1000, dim: "80' x 112'", status: 'available' },
+      { area: 1200, dim: "90' x 120'", status: 'available' },
+      // Row 2
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      { area: 450, dim: "60' x 67'", status: 'booked' },
+      { area: 600, dim: "60' x 90'", status: 'available' },
+      { area: 600, dim: "60' x 90'", status: 'sold' },
+      { area: 800, dim: "70' x 103'", status: 'available' },
+      { area: 1000, dim: "80' x 112'", status: 'blocked' },
+      { area: 1000, dim: "80' x 112'", status: 'available' },
+      // Row 3
+      { area: 300, dim: "50' x 54'", status: 'sold' },
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      { area: 500, dim: "65' x 70'", status: 'available' },
+      { area: 600, dim: "60' x 90'", status: 'available' },
+      { area: 600, dim: "60' x 90'", status: 'booked' },
+      { area: 800, dim: "70' x 103'", status: 'available' },
+      { area: 1000, dim: "80' x 112'", status: 'available' },
+      { area: 1000, dim: "80' x 112'", status: 'available' },
+      // Row 4
+      { area: 300, dim: "50' x 54'", status: 'available' },
+      { area: 400, dim: "60' x 60'", status: 'available' },
+      { area: 500, dim: "65' x 70'", status: 'available' },
+      { area: 600, dim: "60' x 90'", status: 'sold' },
+      { area: 600, dim: "60' x 90'", status: 'available' },
+      { area: 800, dim: "70' x 103'", status: 'booked' },
+      { area: 1000, dim: "80' x 112'", status: 'available' },
+      { area: 1000, dim: "80' x 112'", status: 'available' },
+    ],
+  };
+
+  const presetList = sizePresets[projectId] || sizePresets['green-county-elite'];
+
+  const coords = [
+    // ── Row 1 (8 plots): y: 52, h: 52 ──
+    { x: 35,  y: 52, w: 70, h: 52, facing: 'East',  corner: true,  sector: sectors[0], road: config.road1 },
+    { x: 110, y: 52, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[0], road: config.road1 },
+    { x: 185, y: 52, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[0], road: config.road1 },
+    { x: 260, y: 52, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[0], road: config.road1 },
+    { x: 430, y: 52, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[0], road: config.road1 },
+    { x: 505, y: 52, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[0], road: config.road1 },
+    { x: 580, y: 52, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[0], road: config.road1 },
+    { x: 655, y: 52, w: 70, h: 52, facing: 'East',  corner: true,  sector: sectors[0], road: config.road1 },
+
+    // ── Row 2 (8 plots): y: 152, h: 52 ──
+    { x: 35,  y: 152, w: 70, h: 52, facing: 'West',  corner: true,  sector: sectors[1], road: config.road1 },
+    { x: 110, y: 152, w: 70, h: 52, facing: 'West',  corner: false, sector: sectors[1], road: config.road1 },
+    { x: 185, y: 152, w: 70, h: 52, facing: 'West',  corner: false, sector: sectors[1], road: config.road1 },
+    { x: 260, y: 152, w: 70, h: 52, facing: 'West',  corner: false, sector: sectors[1], road: config.road1 },
+    { x: 430, y: 152, w: 70, h: 52, facing: 'West',  corner: false, sector: sectors[1], road: config.road1 },
+    { x: 505, y: 152, w: 70, h: 52, facing: 'West',  corner: false, sector: sectors[1], road: config.road1 },
+    { x: 580, y: 152, w: 70, h: 52, facing: 'West',  corner: false, sector: sectors[1], road: config.road1 },
+    { x: 655, y: 152, w: 70, h: 52, facing: 'West',  corner: true,  sector: sectors[1], road: config.road1 },
+
+    // ── Row 3 (8 plots): y: 250, h: 52 ──
+    { x: 35,  y: 250, w: 70, h: 52, facing: 'North', corner: true,  sector: sectors[2], road: config.road2 },
+    { x: 110, y: 250, w: 70, h: 52, facing: 'North', corner: false, sector: sectors[2], road: config.road2 },
+    { x: 185, y: 250, w: 70, h: 52, facing: 'North', corner: false, sector: sectors[2], road: config.road2 },
+    { x: 260, y: 250, w: 70, h: 52, facing: 'North', corner: false, sector: sectors[2], road: config.road2 },
+    { x: 345, y: 250, w: 70, h: 52, facing: 'North', corner: false, sector: sectors[2], road: config.road2 },
+    { x: 430, y: 250, w: 70, h: 52, facing: 'North', corner: false, sector: sectors[2], road: config.road2 },
+    { x: 515, y: 250, w: 70, h: 52, facing: 'North', corner: false, sector: sectors[2], road: config.road2 },
+    { x: 600, y: 250, w: 70, h: 52, facing: 'North', corner: true,  sector: sectors[2], road: config.road2 },
+
+    // ── Row 4 (8 plots): y: 348, h: 52 ──
+    { x: 110, y: 348, w: 70, h: 52, facing: 'East',  corner: true,  sector: sectors[2], road: config.road3 },
+    { x: 185, y: 348, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[2], road: config.road3 },
+    { x: 260, y: 348, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[2], road: config.road3 },
+    { x: 335, y: 348, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[2], road: config.road3 },
+    { x: 410, y: 348, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[2], road: config.road3 },
+    { x: 485, y: 348, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[2], road: config.road3 },
+    { x: 560, y: 348, w: 70, h: 52, facing: 'East',  corner: false, sector: sectors[2], road: config.road3 },
+    { x: 635, y: 348, w: 75, h: 52, facing: 'East',  corner: true,  sector: sectors[2], road: config.road3 },
+  ];
+
+  return coords.map((c, idx) => {
+    const num = startNum + idx;
+    const preset = presetList[idx] || { area: 200, dim: "40' x 45'", status: 'available' };
+    const area = preset.area;
+    const sqft = area * 9;
+    const totalPriceLakhs = parseFloat(((area * rate) / 100000).toFixed(2));
+
+    return {
+      id: `${projectId}-P${num}`,
+      projectId,
+      label: `${num}`,
+      sector: c.sector,
+      facing: c.facing,
+      road: c.road,
+      corner: c.corner,
+      x: c.x,
+      y: c.y,
+      w: c.w,
+      h: c.h,
+      area,
+      sqft,
+      dimensions: preset.dim,
+      pricePerYd: rate,
+      price: totalPriceLakhs,
+      status: preset.status,
+    };
+  });
+}
 
 export const AMENITIES = [
   {

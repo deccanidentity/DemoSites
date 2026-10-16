@@ -14,13 +14,16 @@ import {
 } from './villaMarkData.js';
 import VillaFloorPlan from './VillaFloorPlan.jsx';
 
-const PAGES = ['Home', 'About', 'Villa Types', 'Floor Plans', 'Amenities', 'Gallery', 'Location', 'Contact'];
+const PAGES = ['Home', 'About', 'Villa Types', 'Floor Plans', 'Project Highlights', 'Gallery', 'Contact'];
 
 export default function VillaMarkDemo() {
   const [activePage, setActivePage] = useState(() => {
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search).get('page');
-      if (p && PAGES.includes(p)) return p;
+      if (p) {
+        if (p === 'Amenities' || p === 'Location' || p === 'amenities' || p === 'location' || p === 'highlights') return 'Project Highlights';
+        if (PAGES.includes(p)) return p;
+      }
     }
     return 'Home';
   });
@@ -29,6 +32,7 @@ export default function VillaMarkDemo() {
   const [activePlan, setActivePlan] = useState('ground');
   const [galleryFilter, setGalleryFilter] = useState('All');
   const [lightboxData, setLightboxData] = useState(null); // { type: 'img' | 'svg', src, title, caption, component }
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Contact form states
   const [contactForm, setContactForm] = useState({
@@ -168,8 +172,105 @@ export default function VillaMarkDemo() {
             <span>Free Site Visit</span>
             <span className="vm-btn-free-visit__tag">FREE</span>
           </button>
+
+          <button
+            className={`pm-nav__hamburger ${mobileMenuOpen ? 'open' : ''}`}
+            onClick={() => setMobileMenuOpen(prev => !prev)}
+            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className="pm-hamburger-bar"></span>
+            <span className="pm-hamburger-bar"></span>
+            <span className="pm-hamburger-bar"></span>
+          </button>
         </div>
       </nav>
+
+      {/* Mobile & Tablet Navigation Drawer */}
+      <div
+        className={`pm-mobile-drawer-overlay ${mobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden={!mobileMenuOpen}
+      >
+        <aside
+          className="pm-mobile-drawer"
+          onClick={e => e.stopPropagation()}
+          role="dialog"
+          aria-label="Mobile Navigation Menu"
+        >
+          <div className="pm-mobile-drawer__header">
+            <div
+              className="pm-nav__logo vm-logo"
+              onClick={() => {
+                setActivePage('Home');
+                setMobileMenuOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <span style={{ fontSize: '1.4rem' }}>🏡</span>
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
+                <span style={{ fontFamily: 'var(--font-display, serif)', fontWeight: 800, fontSize: '1.2rem', color: 'var(--vm-navy-text)' }}>
+                  Villa<span style={{ color: 'var(--vm-gold, #b47506)' }}>Mark</span>
+                </span>
+                <span style={{ fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.08em', color: 'var(--vm-gold)', textTransform: 'uppercase' }}>
+                  Luxury Villas &amp; Estates
+                </span>
+              </div>
+            </div>
+            <button
+              className="pm-mobile-drawer__close"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              ✕
+            </button>
+          </div>
+
+          <nav className="pm-mobile-drawer__nav">
+            <div className="pm-mobile-nav__group">
+              <div className="pm-mobile-nav__label">Navigation Menu</div>
+              {PAGES.map(p => (
+                <button
+                  key={p}
+                  className={`pm-mobile-nav__item ${activePage === p ? 'active' : ''}`}
+                  onClick={() => {
+                    setActivePage(p);
+                    setMobileMenuOpen(false);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <span className="pm-mobile-nav__text">{p}</span>
+                  {activePage === p && <span className="pm-mobile-nav__dot">●</span>}
+                </button>
+              ))}
+            </div>
+          </nav>
+
+          <div className="pm-mobile-drawer__footer">
+            <button
+              className="btn btn-primary pm-mobile-drawer__btn"
+              style={{ background: 'var(--vm-gold, #b47506)', borderColor: 'var(--vm-gold, #b47506)', color: '#ffffff' }}
+              onClick={() => {
+                setActivePage('Contact');
+                setMobileMenuOpen(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            >
+              <span>🚗 Book Free Site Visit</span>
+            </button>
+            <a
+              href={waUrl()}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-outline pm-mobile-drawer__btn"
+              style={{ borderColor: '#22c55e', color: '#22c55e' }}
+            >
+              <span>💬 Order on WhatsApp</span>
+            </a>
+          </div>
+        </aside>
+      </div>
 
       {/* ── Main Content Router ─────────────────────────────────────────────── */}
       <main className="pm-main">
@@ -497,7 +598,7 @@ export default function VillaMarkDemo() {
                     <button
                       className="btn btn-primary"
                       onClick={() => {
-                        setActivePage('Amenities');
+                        setActivePage('Project Highlights');
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                     >
@@ -998,37 +1099,142 @@ export default function VillaMarkDemo() {
           </section>
         )}
 
-        {/* 4. AMENITIES PAGE */}
-        {activePage === 'Amenities' && (
-          <section className="pm-section container">
-            <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 2.5rem' }}>
+        {/* 4. PROJECT HIGHLIGHTS PAGE (Merged Amenities & Location Connectivity) */}
+        {(activePage === 'Project Highlights' || activePage === 'Amenities' || activePage === 'Location') && (
+          <div className="pm-section container">
+            <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 3rem' }}>
               <span className="vm-hero-badge" style={{ marginBottom: '0.75rem' }}>
-                Resort Living
+                🌟 Signature Living &amp; Strategic Connectivity
               </span>
               <h2 className="pm-section__title" style={{ margin: '0 0 0.75rem' }}>
-                World-Class Township Amenities
+                Project Highlights
               </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                Designed for active wellness, community celebrations, and serene privacy across 25 acres of gated luxury.
+              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.6' }}>
+                Designed for active wellness, community celebrations, and serene privacy across 25 acres of gated luxury with prime Airport corridor connectivity.
               </p>
             </div>
 
-            <div className="vm-amenities-grid">
-              {AMENITIES.map(amenity => (
-                <div key={amenity.id} className="vm-amenity-card">
-                  <div className="vm-amenity-card__media">
-                    <img src={amenity.image} alt={amenity.title} className="vm-amenity-card__img" loading="lazy" />
-                    <div className="vm-amenity-card__icon-badge">{amenity.icon}</div>
+            {/* Part 1: Township Amenities */}
+            <div style={{ marginBottom: '4.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid rgba(180, 117, 6, 0.2)' }}>
+                <div>
+                  <span className="vm-hero-badge" style={{ marginBottom: '0.4rem' }}>Resort Living</span>
+                  <h3 style={{ fontSize: '1.65rem', fontWeight: 800, margin: 0, color: 'var(--vm-navy-text)' }}>
+                    World-Class Township Amenities
+                  </h3>
+                </div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 600 }}>
+                  25 Acres Gated Luxury
+                </div>
+              </div>
+
+              <div className="vm-amenities-grid">
+                {AMENITIES.map(amenity => (
+                  <div key={amenity.id} className="vm-amenity-card">
+                    <div className="vm-amenity-card__media">
+                      <img src={amenity.image} alt={amenity.title} className="vm-amenity-card__img" loading="lazy" />
+                      <div className="vm-amenity-card__icon-badge">{amenity.icon}</div>
+                    </div>
+                    <div className="vm-amenity-card__body">
+                      <h3 className="vm-amenity-card__title">{amenity.title}</h3>
+                      <span className="vm-amenity-card__sub">{amenity.subtitle}</span>
+                      <p className="vm-amenity-card__desc">{amenity.desc}</p>
+                    </div>
                   </div>
-                  <div className="vm-amenity-card__body">
-                    <h3 className="vm-amenity-card__title">{amenity.title}</h3>
-                    <span className="vm-amenity-card__sub">{amenity.subtitle}</span>
-                    <p className="vm-amenity-card__desc">{amenity.desc}</p>
+                ))}
+              </div>
+            </div>
+
+            {/* Part 2: Strategic Connectivity & Location */}
+            <div style={{ marginBottom: '3.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid rgba(180, 117, 6, 0.2)' }}>
+                <div>
+                  <span className="vm-hero-badge" style={{ marginBottom: '0.4rem' }}>Strategic Connectivity</span>
+                  <h3 style={{ fontSize: '1.65rem', fontWeight: 800, margin: 0, color: 'var(--vm-navy-text)' }}>
+                    Location &amp; Growth Corridor
+                  </h3>
+                </div>
+                <div style={{ color: 'var(--vm-gold, #b47506)', fontSize: '0.875rem', fontWeight: 700 }}>
+                  📍 Tukkuguda / Airport Corridor, Hyderabad
+                </div>
+              </div>
+
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '1.75rem', maxWidth: '720px', lineHeight: '1.6' }}>
+                Strategically positioned in the high-growth Tukkuguda / Airport corridor with direct signal-free access to Nehru Outer Ring Road (ORR Exit 14), international schools, and prime employment zones.
+              </p>
+
+              <div className="vm-location-grid">
+                <div>
+                  <h4 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', color: 'var(--vm-navy-text)' }}>
+                    📍 Key Landmarks &amp; Driving Times
+                  </h4>
+                  {LOCATION_HIGHLIGHTS.landmarks.map((lm, idx) => (
+                    <div key={idx} className="vm-landmark-card">
+                      <span className="vm-landmark-place">{lm.place}</span>
+                      <div className="vm-landmark-meta">
+                        <span className="vm-landmark-dist">{lm.dist}</span>
+                        <span className="vm-landmark-time">{lm.time}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="vm-map-container">
+                  <div>
+                    <h4 style={{ fontSize: '1.2rem', margin: '0 0 0.5rem', color: 'var(--vm-navy-text)' }}>
+                      🗺️ Location Map &amp; Directions
+                    </h4>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
+                      {LOCATION_HIGHLIGHTS.address}
+                    </p>
+
+                    <div
+                      style={{
+                        height: '240px',
+                        background: 'linear-gradient(135deg, #1e293b, #0f172a)',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#ffffff',
+                        gap: '8px',
+                        border: '1px solid rgba(180, 117, 6, 0.3)',
+                        marginBottom: '1.5rem',
+                        textAlign: 'center',
+                        padding: '1.5rem',
+                      }}
+                    >
+                      <div style={{ fontSize: '2.5rem' }}>📍</div>
+                      <strong style={{ fontSize: '1.1rem' }}>VillaMark Luxury Gated Community</strong>
+                      <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Near ORR Exit 14 · Airport Corridor, Hyderabad</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <a
+                      href={LOCATION_HIGHLIGHTS.googleMapsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-primary"
+                      style={{ flex: 1, justifyContent: 'center' }}
+                    >
+                      Open in Google Maps →
+                    </a>
+                    <button
+                      className="btn btn-outline"
+                      onClick={() => {
+                        setActivePage('Contact');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    >
+                      Schedule Chauffeur Visit
+                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-          </section>
+          </div>
         )}
 
         {/* 5. GALLERY PAGE */}
@@ -1078,90 +1284,7 @@ export default function VillaMarkDemo() {
           </section>
         )}
 
-        {/* 6. LOCATION PAGE */}
-        {activePage === 'Location' && (
-          <section className="pm-section container">
-            <div style={{ maxWidth: '680px', marginBottom: '2rem' }}>
-              <span className="vm-hero-badge" style={{ marginBottom: '0.75rem' }}>
-                Strategic Connectivity
-              </span>
-              <h2 className="pm-section__title" style={{ margin: '0 0 0.75rem' }}>
-                Prime Growth Corridor Location
-              </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                Strategically positioned in the high-growth Tukkuguda / Airport corridor with direct signal-free access to Nehru Outer Ring Road (ORR Exit 14), international schools, and prime employment zones.
-              </p>
-            </div>
 
-            <div className="vm-location-grid">
-              <div>
-                <h3 style={{ fontSize: '1.25rem', marginBottom: '1.25rem', color: 'var(--vm-navy-text)' }}>
-                  📍 Key Landmarks &amp; Driving Times
-                </h3>
-                {LOCATION_HIGHLIGHTS.landmarks.map((lm, idx) => (
-                  <div key={idx} className="vm-landmark-card">
-                    <span className="vm-landmark-place">{lm.place}</span>
-                    <div className="vm-landmark-meta">
-                      <span className="vm-landmark-dist">{lm.dist}</span>
-                      <span className="vm-landmark-time">{lm.time}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="vm-map-container">
-                <div>
-                  <h3 style={{ fontSize: '1.25rem', margin: '0 0 0.5rem', color: 'var(--vm-navy-text)' }}>
-                    🗺️ Location Map &amp; Directions
-                  </h3>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
-                    {LOCATION_HIGHLIGHTS.address}
-                  </p>
-
-                  <div
-                    style={{
-                      height: '240px',
-                      background: 'linear-gradient(135deg, #1e293b, #0f172a)',
-                      borderRadius: '12px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ffffff',
-                      gap: '8px',
-                      border: '1px solid rgba(180, 117, 6, 0.3)',
-                      marginBottom: '1.5rem',
-                      textAlign: 'center',
-                      padding: '1.5rem',
-                    }}
-                  >
-                    <div style={{ fontSize: '2.5rem' }}>📍</div>
-                    <strong style={{ fontSize: '1.1rem' }}>VillaMark Luxury Gated Community</strong>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Near ORR Exit 14 · Airport Corridor, Hyderabad</span>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <a
-                    href={LOCATION_HIGHLIGHTS.googleMapsUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn btn-primary"
-                    style={{ flex: 1, justifyContent: 'center' }}
-                  >
-                    Open in Google Maps →
-                  </a>
-                  <button
-                    className="btn btn-outline"
-                    onClick={() => setActivePage('Contact')}
-                  >
-                    Schedule Chauffeur Visit
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* 7. ABOUT PAGE */}
         {activePage === 'About' && (
@@ -1461,9 +1584,8 @@ export default function VillaMarkDemo() {
                 { id: 'About', label: 'About Us' },
                 { id: 'Villa Types', label: 'Villa Residences' },
                 { id: 'Floor Plans', label: 'Project Floor Plans' },
-                { id: 'Amenities', label: 'Township Amenities' },
+                { id: 'Project Highlights', label: 'Project Highlights' },
                 { id: 'Gallery', label: 'Photo Gallery' },
-                { id: 'Location', label: 'Location Advantages' },
               ].map(link => (
                 <li key={link.id}>
                   <button

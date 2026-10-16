@@ -1,9 +1,12 @@
-/* ── Draggable Floating WhatsApp Overlay Widget ───────────────────────────── */
+/* ── Floating WhatsApp Action Button (Bottom-Left Corner) ──────────────────── */
 .floating-wa {
   position: fixed;
-  z-index: 999999;
-  width: 60px;
-  height: 60px;
+  bottom: 24px;
+  left: 24px;
+  right: auto;
+  z-index: 999997;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: linear-gradient(145deg, #25D366 0%, #1ea952 100%);
   color: #ffffff;
@@ -11,79 +14,92 @@
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 8px 24px rgba(37, 211, 102, 0.45),
-    0 2px 8px rgba(0, 0, 0, 0.25),
+    0 8px 22px rgba(37, 211, 102, 0.44),
+    0 2px 6px rgba(0, 0, 0, 0.22),
     inset 0 1px 2px rgba(255, 255, 255, 0.4);
-  cursor: grab;
+  cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: none;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  touch-action: manipulation;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
 }
 
 .floating-wa:hover {
   transform: scale(1.08);
   box-shadow:
-    0 10px 32px rgba(37, 211, 102, 0.6),
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    inset 0 1px 3px rgba(255, 255, 255, 0.5);
+    0 8px 24px rgba(37, 211, 102, 0.58),
+    0 4px 10px rgba(0, 0, 0, 0.28),
+    inset 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 
-.floating-wa:active,
-.floating-wa.is-dragging {
-  cursor: grabbing !important;
-  transform: scale(1.14);
-  transition: none !important;
-  box-shadow:
-    0 14px 40px rgba(37, 211, 102, 0.75),
-    0 6px 16px rgba(0, 0, 0, 0.35);
+.floating-wa:active {
+  transform: scale(0.96);
 }
 
 /* Subtle continuous pulse wave behind circle */
 .floating-wa__pulse {
   position: absolute;
-  inset: -6px;
+  inset: -4px;
   border-radius: 50%;
-  background: rgba(37, 211, 102, 0.35);
+  background: rgba(37, 211, 102, 0.32);
   z-index: -1;
-  animation: floating-wa-pulse 2.4s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+  animation: floating-wa-pulse 2.6s cubic-bezier(0.24, 0, 0.38, 1) infinite;
   pointer-events: none;
 }
 
 @keyframes floating-wa-pulse {
   0% {
-    transform: scale(0.95);
-    opacity: 0.85;
+    transform: scale(0.92);
+    opacity: 0.8;
   }
+
   50% {
-    transform: scale(1.35);
+    transform: scale(1.28);
     opacity: 0;
   }
+
   100% {
-    transform: scale(0.95);
+    transform: scale(0.92);
     opacity: 0;
   }
 }
 
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+
+  .floating-wa,
+  .floating-wa__pulse {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .floating-wa:hover {
+    transform: none !important;
+  }
+}
+
+/* WhatsApp Icon (Slightly increased to 28px for prominent, crisp visibility) */
 .floating-wa__icon {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   fill: #ffffff;
   pointer-events: none;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
 }
 
-/* Tooltip Badge on Hover */
+/* Tooltip Badge on Hover (Positioned to the right since FAB is on the left) */
 .floating-wa__tooltip {
   position: absolute;
   top: 50%;
+  left: calc(100% + 12px);
+  right: auto;
   transform: translateY(-50%);
   background: rgba(15, 23, 42, 0.94);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: #ffffff;
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 700;
@@ -107,16 +123,9 @@
   box-shadow: 0 0 6px #25D366;
 }
 
-.floating-wa.dock-right .floating-wa__tooltip {
-  right: calc(100% + 12px);
-}
-
-.floating-wa.dock-left .floating-wa__tooltip {
-  left: calc(100% + 12px);
-}
-
-.floating-wa:hover:not(.is-dragging) .floating-wa__tooltip {
+.floating-wa:hover .floating-wa__tooltip {
   opacity: 1;
+  transform: translateY(-50%) translateX(2px);
 }
 
 /* Light mode support */
@@ -125,4 +134,25 @@
   color: #0f172a;
   border: 1px solid rgba(0, 0, 0, 0.12);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive Mobile Adjustments */
+@media (max-width: 640px) {
+  .floating-wa {
+    bottom: 18px;
+    left: 18px;
+    right: auto;
+    width: 44px;
+    height: 44px;
+  }
+
+  .floating-wa__icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .floating-wa__tooltip {
+    display: none;
+    /* Hide hover tooltip on touch screens */
+  }
 }

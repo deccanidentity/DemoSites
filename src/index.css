@@ -13,6 +13,7 @@
 
   /* Surfaces */
   --bg-base: #080808;
+  --bg-body: #080808;
   --bg-surface: #0f0f0f;
   --bg-elevated: #161616;
   --bg-card: #111111;
@@ -21,17 +22,17 @@
 
   /* Glass */
   --glass-bg: rgba(255, 255, 255, 0.04);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-hover: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-hover: rgba(255, 255, 255, 0.08);
 
-  /* Text */
-  --text-primary: #F5F5F5;
-  --text-secondary: #A0A0A0;
-  --text-muted: #555;
-  --text-gold: #C8860A;
+  /* Text - High Contrast WCAG AAA Compliant Dark Mode */
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-gold: #F59E0B;
 
   /* Border */
-  --border: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.10);
   --border-gold: rgba(200,134,10,0.4);
 
   /* Radius */
@@ -75,6 +76,33 @@
   --nav-height: 68px;
 }
 
+/* ── Explicit Dark Mode Tokens ───────────────────────────────────────────── */
+[data-theme="dark"] {
+  --brand-gold: #C8860A;
+  --brand-gold-light: #F0A830;
+  --brand-gold-dim: rgba(200, 134, 10, 0.18);
+
+  --bg-base: #080808;
+  --bg-body: #080808;
+  --bg-surface: #0f0f0f;
+  --bg-elevated: #161616;
+  --bg-card: #111111;
+  --bg-card-hover: #181818;
+  --bg-nav: rgba(8, 8, 8, 0.88);
+
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-hover: rgba(255, 255, 255, 0.09);
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-gold: #F59E0B;
+
+  --border: rgba(255, 255, 255, 0.10);
+  --border-gold: rgba(200, 134, 10, 0.45);
+}
+
 /* ── Light Mode Tokens ───────────────────────────────────────────────────── */
 [data-theme="light"] {
   /* Brand */
@@ -84,6 +112,7 @@
 
   /* Surfaces */
   --bg-base: #f8fafc;
+  --bg-body: #ffffff;
   --bg-surface: #ffffff;
   --bg-elevated: #f1f5f9;
   --bg-card: #ffffff;
@@ -97,7 +126,7 @@
 
   /* Text */
   --text-primary: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #334155;
   --text-muted: #64748b;
   --text-gold: #b47506;
 
@@ -141,6 +170,18 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+}
+
+/* ── Desktop Proportional Viewport Scale ─────────────────────────────────────
+   Delivers the clean, well-proportioned ~75-80% desktop scale natively across
+   modern browsers (Chrome, Edge, Safari, Firefox 126+) without requiring the
+   user to manually adjust browser zoom.
+   Maintains 100% touch scale on tablets and mobile devices.
+   ─────────────────────────────────────────────────────────────────────────── */
+@media screen and (min-width: 1025px) {
+  html:not([data-preview-mode="tab"]):not([data-preview-mode="mobile"]) {
+    zoom: 0.78;
+  }
 }
 
 body {
@@ -592,44 +633,126 @@ h1, h2, h3, h4, h5, h6 {
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 200;
-  height: 44px;
-  background: rgba(10, 10, 10, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  height: 50px;
+  background: rgba(10, 10, 10, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-gold);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-5);
-  gap: var(--space-4);
+  padding: 0 var(--space-4);
+  gap: var(--space-3);
   transition: background var(--duration) var(--ease), border-color var(--duration) var(--ease);
 }
 
+/* ── Prominent Highlighted Back to Template Button (Top-Left) ── */
 .demo-bar__back {
   font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--text-secondary);
+  font-weight: 700;
+  color: #bfdbfe;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  transition: color var(--duration-fast) var(--ease);
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(37, 99, 235, 0.22);
+  border: 1.5px solid rgba(96, 165, 250, 0.45);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
+  flex-shrink: 0;
 }
+
+.demo-bar__back-icon {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
 .demo-bar__back:hover {
-  color: var(--brand-gold);
+  background: #2563EB;
+  border-color: #2563EB;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+  transform: translateY(-1px);
+}
+
+.demo-bar__back:hover .demo-bar__back-icon {
+  transform: translateX(-3px);
+}
+
+.demo-bar__back:focus-visible {
+  outline: 2px solid #2563EB;
+  outline-offset: 2px;
 }
 
 .demo-bar__label {
-  font-size: 0.78125rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-secondary);
-  flex: 1;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: 0.02em;
+  flex: 1;
+}
+
+/* ── Right Actions: Preview Controls, Dark Mode, CTA ── */
+.demo-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Preview Toolbar (Web, Tab, Mobile) beside Dark Mode */
+.demo-preview-toolbar {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.demo-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.demo-preview-btn:hover {
+  color: #93c5fd;
+  background: rgba(37, 99, 235, 0.16);
+}
+
+.demo-preview-btn.active,
+.demo-preview-btn.active:hover {
+  background: #2563EB !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.45);
+}
+
+.demo-preview-btn:focus-visible {
+  outline: 2px solid #2563EB;
+  outline-offset: 1px;
 }
 
 .demo-theme-toggle {
@@ -654,17 +777,40 @@ h1, h2, h3, h4, h5, h6 {
   transform: rotate(15deg) scale(1.08);
 }
 
+/* ── Light Mode Overrides for Demo Bar ── */
 [data-theme="light"] .demo-bar {
-  background: rgba(255, 255, 255, 0.95);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 [data-theme="light"] .demo-bar__back {
+  background: #e0edff;
+  border: 1.5px solid #93c5fd;
+  color: #1d4ed8;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.12);
+}
+
+[data-theme="light"] .demo-bar__back:hover {
+  background: #2563EB;
+  border-color: #2563EB;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+}
+
+[data-theme="light"] .demo-preview-toolbar {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.1);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .demo-preview-btn {
   color: #475569;
 }
-[data-theme="light"] .demo-bar__back:hover {
-  color: var(--brand-gold);
+
+[data-theme="light"] .demo-preview-btn:hover {
+  color: #2563EB;
+  background: rgba(37, 99, 235, 0.08);
 }
 
 [data-theme="light"] .demo-bar__label {
@@ -682,3 +828,612 @@ h1, h2, h3, h4, h5, h6 {
   border-color: #b47506;
   color: #92400e;
 }
+
+/* ── Responsive Adaptations for Demo Bar ── */
+@media (max-width: 1080px) {
+  .demo-bar__label {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .demo-preview-btn__label {
+    display: none;
+  }
+  .demo-preview-btn {
+    padding: 6px 9px;
+  }
+  .demo-bar__back-text {
+    display: none;
+  }
+  .demo-bar__back {
+    padding: 6px 10px;
+  }
+}
+
+/* ── Global Device Preview Mode (Web, Tab & Mobile) for all Demo Templates ── */
+[data-preview-mode="tab"],
+[data-preview-mode="mobile"] {
+  background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0a1120 100%) !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+[data-theme="light"][data-preview-mode="tab"],
+[data-theme="light"][data-preview-mode="mobile"] {
+  background: radial-gradient(circle at 50% 20%, #e2e8f0 0%, #cbd5e1 100%) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   1. DEVICE FRAME CONTAINERS (Tablet & Mobile Chassis)
+───────────────────────────────────────────────────────────────────────────── */
+
+/* Tablet Chassis: 768px Width */
+[data-preview-mode="tab"] .pm-demo:not(.fm-preview-shell),
+[data-preview-mode="tab"] .pv-demo,
+[data-preview-mode="tab"] .fm-demo {
+  max-width: 768px !important;
+  width: min(768px, calc(100vw - 32px)) !important;
+  height: calc(100vh - 74px) !important;
+  max-height: 980px !important;
+  margin: 62px auto 12px auto !important;
+  border-radius: 28px !important;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.15), inset 0 0 0 2px #334155 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: relative !important;
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
+  background: var(--bg-body, #0a0a0a) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+[data-theme="light"][data-preview-mode="tab"] .pm-demo:not(.fm-preview-shell),
+[data-theme="light"][data-preview-mode="tab"] .pv-demo,
+[data-theme="light"][data-preview-mode="tab"] .fm-demo {
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.1), inset 0 0 0 2px #cbd5e1 !important;
+  background: #ffffff !important;
+}
+
+/* Tablet Camera Indicator */
+[data-preview-mode="tab"] .pm-demo:not(.fm-preview-shell)::before {
+  content: '';
+  position: sticky;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  z-index: 1000;
+  display: block;
+  margin: 0 auto -8px auto;
+  pointer-events: none;
+}
+
+/* Mobile Chassis: 390px Width (Modern Smartphone Viewport) */
+[data-preview-mode="mobile"] .pm-demo:not(.fm-preview-shell),
+[data-preview-mode="mobile"] .pv-demo,
+[data-preview-mode="mobile"] .fm-demo {
+  max-width: 390px !important;
+  width: min(390px, calc(100vw - 16px)) !important;
+  height: calc(100vh - 74px) !important;
+  max-height: 844px !important;
+  margin: 62px auto 12px auto !important;
+  border-radius: 44px !important;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.9), 0 0 0 1.5px rgba(255, 255, 255, 0.2), inset 0 0 0 2.5px #1e293b !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: relative !important;
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
+  background: var(--bg-body, #0a0a0a) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+[data-theme="light"][data-preview-mode="mobile"] .pm-demo:not(.fm-preview-shell),
+[data-theme="light"][data-preview-mode="mobile"] .pv-demo,
+[data-theme="light"][data-preview-mode="mobile"] .fm-demo {
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.25), 0 0 0 1.5px rgba(0, 0, 0, 0.12), inset 0 0 0 2.5px #cbd5e1 !important;
+  background: #ffffff !important;
+}
+
+/* Dynamic Island Notch for Mobile */
+[data-preview-mode="mobile"] .pm-demo:not(.fm-preview-shell)::before {
+  content: '';
+  position: sticky;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 105px;
+  height: 22px;
+  background: #000000;
+  border-radius: 20px;
+  z-index: 1000;
+  display: block;
+  margin: 0 auto -22px auto;
+  pointer-events: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+/* For PlotVenture & FlatMark with their own outer shells */
+[data-preview-mode="tab"] .pv-preview-shell,
+[data-preview-mode="mobile"] .pv-preview-shell,
+[data-preview-mode="tab"] .fm-preview-shell,
+[data-preview-mode="mobile"] .fm-preview-shell {
+  background: transparent !important;
+}
+
+[data-preview-mode="tab"] .pv-preview-stage,
+[data-preview-mode="mobile"] .pv-preview-stage,
+[data-preview-mode="tab"] .fm-preview-stage,
+[data-preview-mode="mobile"] .fm-preview-stage {
+  padding-top: 60px !important;
+}
+
+/* Seamless Scrollbars inside Device Chassis (Matches native smartphone behavior without corner clipping) */
+[data-preview-mode="tab"] .pm-demo,
+[data-preview-mode="mobile"] .pm-demo,
+[data-preview-mode="tab"] .pv-device-screen,
+[data-preview-mode="mobile"] .pv-device-screen,
+[data-preview-mode="tab"] .fm-device-screen,
+[data-preview-mode="mobile"] .fm-device-screen {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+[data-preview-mode="tab"] .pm-demo::-webkit-scrollbar,
+[data-preview-mode="mobile"] .pm-demo::-webkit-scrollbar,
+[data-preview-mode="tab"] .pv-device-screen::-webkit-scrollbar,
+[data-preview-mode="mobile"] .pv-device-screen::-webkit-scrollbar,
+[data-preview-mode="tab"] .fm-device-screen::-webkit-scrollbar,
+[data-preview-mode="mobile"] .fm-device-screen::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   2. STICKY HEADER & NAVBAR ADAPTATION IN FRAMED MODES
+───────────────────────────────────────────────────────────────────────────── */
+[data-preview-mode="tab"] .pm-nav,
+[data-preview-mode="mobile"] .pm-nav,
+[data-preview-mode="tab"] .pv-nav,
+[data-preview-mode="mobile"] .pv-nav,
+[data-preview-mode="tab"] .portal-nav,
+[data-preview-mode="mobile"] .portal-nav,
+[data-preview-mode="tab"] .dm-nav,
+[data-preview-mode="mobile"] .dm-nav,
+[data-preview-mode="tab"] .lm-header,
+[data-preview-mode="mobile"] .lm-header {
+  position: sticky !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  z-index: 100 !important;
+  box-sizing: border-box !important;
+}
+
+[data-preview-mode="mobile"] .pm-nav,
+[data-preview-mode="mobile"] .pv-nav,
+[data-preview-mode="mobile"] .portal-nav,
+[data-preview-mode="mobile"] .dm-nav,
+[data-preview-mode="mobile"] .lm-header {
+  padding-top: 18px !important;
+}
+
+[data-preview-mode="tab"] .pm-main,
+[data-preview-mode="mobile"] .pm-main,
+[data-preview-mode="tab"] main.pm-main,
+[data-preview-mode="mobile"] main.pm-main,
+[data-preview-mode="tab"] main,
+[data-preview-mode="mobile"] main {
+  padding-top: 0 !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   3. NAVIGATION MENUS & CONTROLS IN TABLET & MOBILE MODES
+───────────────────────────────────────────────────────────────────────────── */
+
+/* Show Hamburger Button when available */
+[data-preview-mode="tab"] .pm-nav__hamburger,
+[data-preview-mode="mobile"] .pm-nav__hamburger,
+[data-preview-mode="tab"] .pv-nav__hamburger,
+[data-preview-mode="mobile"] .pv-nav__hamburger {
+  display: flex !important;
+}
+
+/* Hide desktop links when hamburger exists */
+[data-preview-mode="tab"] .pm-nav:has(.pm-nav__hamburger) .pm-nav__links,
+[data-preview-mode="mobile"] .pm-nav:has(.pm-nav__hamburger) .pm-nav__links,
+[data-preview-mode="tab"] .pv-nav:has(.pv-nav__hamburger) .pv-nav__links,
+[data-preview-mode="mobile"] .pv-nav:has(.pv-nav__hamburger) .pv-nav__links {
+  display: none !important;
+}
+
+/* When no hamburger is present (industry SaaS, Hospital, School, etc.), make links scrollable horizontally */
+[data-preview-mode="tab"] .pm-nav:not(:has(.pm-nav__hamburger)) .pm-nav__links,
+[data-preview-mode="mobile"] .pm-nav:not(:has(.pm-nav__hamburger)) .pm-nav__links {
+  display: flex !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  white-space: nowrap !important;
+  flex-wrap: nowrap !important;
+  gap: 4px !important;
+  padding: 4px 6px !important;
+  scrollbar-width: none !important;
+  max-width: calc(100% - 110px) !important;
+}
+
+[data-preview-mode="tab"] .pm-nav:not(:has(.pm-nav__hamburger)) .pm-nav__links::-webkit-scrollbar,
+[data-preview-mode="mobile"] .pm-nav:not(:has(.pm-nav__hamburger)) .pm-nav__links::-webkit-scrollbar {
+  display: none !important;
+}
+
+[data-preview-mode="mobile"] .pm-nav:not(:has(.pm-nav__hamburger)) .pm-nav__links button {
+  padding: 5px 8px !important;
+  font-size: 0.75rem !important;
+  white-space: nowrap !important;
+}
+
+/* Mobile Header Compacting */
+[data-preview-mode="mobile"] .pm-nav,
+[data-preview-mode="mobile"] .pv-nav,
+[data-preview-mode="mobile"] .dm-nav,
+[data-preview-mode="mobile"] .portal-nav,
+[data-preview-mode="mobile"] .lm-header {
+  padding: 0 10px !important;
+  height: auto !important;
+  min-height: 52px !important;
+}
+
+[data-preview-mode="mobile"] .pm-nav__logo,
+[data-preview-mode="mobile"] .pv-brand,
+[data-preview-mode="mobile"] .dm-nav .pm-nav__logo {
+  font-size: 0.95rem !important;
+  gap: 4px !important;
+}
+
+[data-preview-mode="mobile"] .pm-brand__sub,
+[data-preview-mode="mobile"] .pv-brand__sub,
+[data-preview-mode="mobile"] .dm-nav span:last-child {
+  display: none !important;
+}
+
+[data-preview-mode="mobile"] .pm-nav__actions {
+  gap: 4px !important;
+}
+
+[data-preview-mode="mobile"] .pm-nav__actions .btn {
+  padding: 4px 8px !important;
+  font-size: 0.72rem !important;
+}
+
+[data-preview-mode="mobile"] .pm-nav__brochures-btn,
+[data-preview-mode="mobile"] .pv-nav__brochures-btn {
+  display: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   4. MULTI-COLUMN LAYOUT REORGANIZATION (TABLET PREVIEW)
+───────────────────────────────────────────────────────────────────────────── */
+
+/* 4-column and 3-column grids -> 2 columns */
+[data-preview-mode="tab"] .pm-grid-4,
+[data-preview-mode="tab"] .vm-grid-4,
+[data-preview-mode="tab"] .pv-grid-4,
+[data-preview-mode="tab"] .vm-amenities-grid,
+[data-preview-mode="tab"] .fm-amenities-grid,
+[data-preview-mode="tab"] .pv-amenities-grid,
+[data-preview-mode="tab"] .pm-grid-3,
+[data-preview-mode="tab"] .vm-grid-3,
+[data-preview-mode="tab"] .pv-grid-3,
+[data-preview-mode="tab"] .dm-grid-3,
+[data-preview-mode="tab"] .lm-grid-3,
+[data-preview-mode="tab"] .pm-plots-grid,
+[data-preview-mode="tab"] .vm-villas-grid,
+[data-preview-mode="tab"] .pv-projects-grid,
+[data-preview-mode="tab"] .fm-tower-grid,
+[data-preview-mode="tab"] .fm-plans-grid,
+[data-preview-mode="tab"] .pm-features-grid,
+[data-preview-mode="tab"] .pv-features-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 1rem !important;
+}
+
+/* Split hero grids */
+[data-preview-mode="tab"] .pm-hero__grid,
+[data-preview-mode="tab"] .vm-hero__grid,
+[data-preview-mode="tab"] .pv-hero__grid,
+[data-preview-mode="tab"] .lm-hero-grid,
+[data-preview-mode="tab"] .portal-hero-grid {
+  grid-template-columns: 1fr !important;
+  gap: 1.5rem !important;
+}
+
+/* Footer layout */
+[data-preview-mode="tab"] .pm-footer__container,
+[data-preview-mode="tab"] .pv-footer__container,
+[data-preview-mode="tab"] .vm-footer__container,
+[data-preview-mode="tab"] .fm-footer-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 2rem !important;
+}
+
+[data-preview-mode="tab"] .container {
+  padding-left: 1.25rem !important;
+  padding-right: 1.25rem !important;
+  max-width: 100% !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   5. MULTI-COLUMN LAYOUT REORGANIZATION (MOBILE PREVIEW)
+───────────────────────────────────────────────────────────────────────────── */
+
+/* All multi-column grids collapse to 1 single column */
+[data-preview-mode="mobile"] .pm-grid-4,
+[data-preview-mode="mobile"] .pm-grid-3,
+[data-preview-mode="mobile"] .pm-grid-2,
+[data-preview-mode="mobile"] .vm-grid-4,
+[data-preview-mode="mobile"] .vm-grid-3,
+[data-preview-mode="mobile"] .vm-grid-2,
+[data-preview-mode="mobile"] .pv-grid-4,
+[data-preview-mode="mobile"] .pv-grid-3,
+[data-preview-mode="mobile"] .pv-grid-2,
+[data-preview-mode="mobile"] .dm-grid-3,
+[data-preview-mode="mobile"] .lm-grid-3,
+[data-preview-mode="mobile"] .portal-grid,
+[data-preview-mode="mobile"] .pm-plots-grid,
+[data-preview-mode="mobile"] .vm-villas-grid,
+[data-preview-mode="mobile"] .pv-projects-grid,
+[data-preview-mode="mobile"] .fm-tower-grid,
+[data-preview-mode="mobile"] .fm-plans-grid,
+[data-preview-mode="mobile"] .fm-amenities-grid,
+[data-preview-mode="mobile"] .fm-gallery-grid,
+[data-preview-mode="mobile"] .pm-features-grid,
+[data-preview-mode="mobile"] .pv-features-grid,
+[data-preview-mode="mobile"] .vm-amenities-grid,
+[data-preview-mode="mobile"] .pv-amenities-grid,
+[data-preview-mode="mobile"] .pm-hero__grid,
+[data-preview-mode="mobile"] .vm-hero__grid,
+[data-preview-mode="mobile"] .pv-hero__grid,
+[data-preview-mode="mobile"] .lm-hero-grid,
+[data-preview-mode="mobile"] .portal-hero-grid,
+[data-preview-mode="mobile"] .pm-why-grid,
+[data-preview-mode="mobile"] .pm-gallery-grid,
+[data-preview-mode="mobile"] .pv-gallery-grid,
+[data-preview-mode="mobile"] .vm-specs-grid,
+[data-preview-mode="mobile"] .pm-contact-grid,
+[data-preview-mode="mobile"] .vm-contact-grid,
+[data-preview-mode="mobile"] .dm-stats-grid,
+[data-preview-mode="mobile"] .pv-stats-grid,
+[data-preview-mode="mobile"] .portal-compare-grid,
+[data-preview-mode="mobile"] .pm-footer__container,
+[data-preview-mode="mobile"] .pv-footer__container,
+[data-preview-mode="mobile"] .vm-footer__container,
+[data-preview-mode="mobile"] .fm-footer-grid {
+  grid-template-columns: 1fr !important;
+  gap: 1rem !important;
+}
+
+/* Also handle inline styles with multi-column repeat */
+[data-preview-mode="mobile"] [style*="gridTemplateColumns"],
+[data-preview-mode="mobile"] [style*="grid-template-columns"] {
+  grid-template-columns: 1fr !important;
+}
+
+/* Container, Spacing & Sizing in Mobile */
+[data-preview-mode="mobile"] .container {
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+[data-preview-mode="mobile"] .pm-section,
+[data-preview-mode="mobile"] .pv-section,
+[data-preview-mode="mobile"] .vm-section,
+[data-preview-mode="mobile"] section {
+  padding-top: 1.5rem !important;
+  padding-bottom: 1.5rem !important;
+}
+
+[data-preview-mode="mobile"] .pm-hero,
+[data-preview-mode="mobile"] .pv-hero,
+[data-preview-mode="mobile"] .vm-hero {
+  min-height: auto !important;
+  padding-top: 1.5rem !important;
+  padding-bottom: 1.75rem !important;
+}
+
+[data-preview-mode="mobile"] .pm-card,
+[data-preview-mode="mobile"] .pm-highlight-card,
+[data-preview-mode="mobile"] .pv-card,
+[data-preview-mode="mobile"] .vm-card {
+  padding: 1rem !important;
+}
+
+/* Typography & Headings in Mobile */
+[data-preview-mode="mobile"] h1,
+[data-preview-mode="mobile"] .pm-hero__title,
+[data-preview-mode="mobile"] .pv-hero__title,
+[data-preview-mode="mobile"] .vm-hero__title {
+  font-size: clamp(1.45rem, 5.2vw, 1.95rem) !important;
+  line-height: 1.25 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+[data-preview-mode="mobile"] h2,
+[data-preview-mode="mobile"] .pm-section__title,
+[data-preview-mode="mobile"] .pv-section__title,
+[data-preview-mode="mobile"] .vm-section__title {
+  font-size: clamp(1.2rem, 4.2vw, 1.55rem) !important;
+  line-height: 1.3 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+[data-preview-mode="mobile"] h3 {
+  font-size: 1.05rem !important;
+}
+
+[data-preview-mode="mobile"] p {
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+
+/* Button & Action Stacking in Mobile */
+[data-preview-mode="mobile"] .pm-hero__actions,
+[data-preview-mode="mobile"] .pv-hero__actions,
+[data-preview-mode="mobile"] .vm-hero__actions {
+  flex-direction: column !important;
+  width: 100% !important;
+  gap: 8px !important;
+}
+
+[data-preview-mode="mobile"] .pm-hero__actions .btn,
+[data-preview-mode="mobile"] .pv-hero__actions .btn,
+[data-preview-mode="mobile"] .vm-hero__actions .btn {
+  width: 100% !important;
+  justify-content: center !important;
+}
+
+/* Images & Media */
+[data-preview-mode="tab"] img,
+[data-preview-mode="mobile"] img,
+[data-preview-mode="tab"] video,
+[data-preview-mode="mobile"] video {
+  max-width: 100% !important;
+  height: auto !important;
+  object-fit: cover !important;
+}
+
+/* Touch Filter Pills */
+[data-preview-mode="mobile"] .pm-stage-tabs,
+[data-preview-mode="mobile"] .vm-filter-tabs,
+[data-preview-mode="mobile"] .portal-tabs,
+[data-preview-mode="mobile"] .fm-tabs {
+  display: flex !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  white-space: nowrap !important;
+  scrollbar-width: none !important;
+  padding-bottom: 4px !important;
+  gap: 6px !important;
+}
+
+[data-preview-mode="mobile"] .pm-stage-tabs::-webkit-scrollbar,
+[data-preview-mode="mobile"] .vm-filter-tabs::-webkit-scrollbar {
+  display: none !important;
+}
+
+[data-preview-mode="mobile"] .pm-stage-tab,
+[data-preview-mode="mobile"] .vm-filter-btn {
+  padding: 6px 12px !important;
+  font-size: 0.78rem !important;
+  flex-shrink: 0 !important;
+}
+
+/* Interactive Layout Map in Mobile */
+[data-preview-mode="tab"] .pm-layout-container,
+[data-preview-mode="mobile"] .pm-layout-container,
+[data-preview-mode="tab"] .pv-layout-container,
+[data-preview-mode="mobile"] .pv-layout-container {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+[data-preview-mode="mobile"] .pm-layout-wrap {
+  flex-direction: column !important;
+}
+
+[data-preview-mode="mobile"] .pm-layout-sidebar {
+  width: 100% !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   6. MODALS, DRAWERS & FLOATING WIDGETS WITHIN DEVICE FRAME
+───────────────────────────────────────────────────────────────────────────── */
+[data-preview-mode="tab"] .plot-modal-overlay,
+[data-preview-mode="mobile"] .plot-modal-overlay,
+[data-preview-mode="tab"] .pm-bmodal-overlay,
+[data-preview-mode="mobile"] .pm-bmodal-overlay,
+[data-preview-mode="tab"] .pv-modal-overlay,
+[data-preview-mode="mobile"] .pv-modal-overlay,
+[data-preview-mode="tab"] .fm-modal-overlay,
+[data-preview-mode="mobile"] .fm-modal-overlay,
+[data-preview-mode="tab"] .pm-mobile-drawer-overlay,
+[data-preview-mode="mobile"] .pm-mobile-drawer-overlay,
+[data-preview-mode="tab"] .pv-mobile-drawer-overlay,
+[data-preview-mode="mobile"] .pv-mobile-drawer-overlay,
+[data-preview-mode="tab"] .pm-modal-overlay,
+[data-preview-mode="mobile"] .pm-modal-overlay,
+[data-preview-mode="tab"] .pm-brochure-modal-overlay,
+[data-preview-mode="mobile"] .pm-brochure-modal-overlay,
+[data-preview-mode="tab"] .fm-brochure-modal-overlay,
+[data-preview-mode="mobile"] .fm-brochure-modal-overlay,
+[data-preview-mode="tab"] .vm-lightbox,
+[data-preview-mode="mobile"] .vm-lightbox,
+[data-preview-mode="tab"] .pv-lightbox,
+[data-preview-mode="mobile"] .pv-lightbox {
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: inherit !important;
+  z-index: 1000 !important;
+  overflow-y: auto !important;
+}
+
+[data-preview-mode="mobile"] .plot-modal,
+[data-preview-mode="mobile"] .pv-modal,
+[data-preview-mode="mobile"] .fm-modal,
+[data-preview-mode="mobile"] .pm-bmodal {
+  width: min(92%, 360px) !important;
+  max-height: 85% !important;
+  overflow-y: auto !important;
+  margin: auto !important;
+  padding: 1rem !important;
+}
+
+[data-preview-mode="mobile"] .pm-mobile-drawer,
+[data-preview-mode="mobile"] .pv-mobile-drawer {
+  width: min(290px, 80%) !important;
+  position: absolute !important;
+}
+
+/* Hide detached outer floating widgets in Framed Preview Mode */
+[data-preview-mode="tab"] .floating-whatsapp,
+[data-preview-mode="mobile"] .floating-whatsapp,
+[data-preview-mode="tab"] .ask-ai-floating,
+[data-preview-mode="mobile"] .ask-ai-floating {
+  display: none !important;
+}
+
+[data-preview-mode="tab"] .pm-floating-wa,
+[data-preview-mode="mobile"] .pm-floating-wa,
+[data-preview-mode="tab"] .vm-floating-wa,
+[data-preview-mode="mobile"] .vm-floating-wa,
+[data-preview-mode="tab"] .vm-whatsapp-float,
+[data-preview-mode="mobile"] .vm-whatsapp-float,
+[data-preview-mode="tab"] .pv-floating-wa,
+[data-preview-mode="mobile"] .pv-floating-wa,
+[data-preview-mode="tab"] .fm-floating-wa,
+[data-preview-mode="mobile"] .fm-floating-wa {
+  position: absolute !important;
+  bottom: 18px !important;
+  right: 14px !important;
+  left: auto !important;
+  z-index: 40 !important;
+  transform: scale(0.9) !important;
+}
+

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import siteConfig from '../../data/site.config.js';
 import DemoBar from '../../components/DemoBar.jsx';
@@ -16,10 +16,18 @@ export default function FlatMarkDemo() {
   const [activePage, setActivePage] = useState(() => {
     if (typeof window !== 'undefined') {
       const p = new URLSearchParams(window.location.search).get('page');
-      if (p) return p;
+      if (p) {
+        if (p === 'amenities' || p === 'location') return 'highlights';
+        return p;
+      }
     }
     return 'home';
   });
+
+  // Preview mode: 'web' | 'tab' | 'mobile'
+  const [previewMode, setPreviewMode] = useState('web');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const screenRef = useRef(null);
 
   // Selected tower for filtering floor plans or viewing tower details
   const [selectedTower, setSelectedTower] = useState(TOWERS[0]);
@@ -125,36 +133,59 @@ Website: https://deccanidentity.com/demo/flatmark
     }, 700);
   };
 
-  // Scroll to section helper
+  // Scroll helpers
+  const scrollToTop = () => {
+    if (screenRef.current) {
+      screenRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const scrollToSection = (id) => {
-    if (activePage !== 'home') {
-      setActivePage('home');
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-    } else {
+    const doScroll = () => {
       const el = document.getElementById(id);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    if (activePage !== 'home') {
+      setActivePage('home');
+      setTimeout(doScroll, 100);
+    } else {
+      doScroll();
     }
   };
 
   return (
-    <div className="pm-demo fm-theme">
+    <div className={`pm-demo fm-theme fm-preview-shell fm-preview-shell--${previewMode}`}>
       <DemoBar
         templateSlug="flatmark"
         templateName="FlatMark"
         label="🏢 FlatMark — Premium Apartment Demo"
+        previewMode={previewMode}
+        onPreviewModeChange={setPreviewMode}
       />
 
-      {/* ── Navigation ──────────────────────────────────────────────────────── */}
-      <nav className="pm-nav fm-nav" aria-label="FlatMark navigation">
-        <div
-          className="pm-nav__logo fm-nav__logo"
-          onClick={() => { setActivePage('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-          role="button"
-          tabIndex={0}
-        >
+      <div className={`fm-preview-stage fm-preview-stage--${previewMode} ${previewMode !== 'web' ? 'fm-preview-stage--framed' : ''}`}>
+        <div className={`fm-device-frame fm-device-frame--${previewMode}`}>
+          {previewMode === 'mobile' && (
+            <div className="fm-device-notch" aria-hidden="true">
+              <span className="fm-device-camera" />
+              <span className="fm-device-speaker" />
+            </div>
+          )}
+          {previewMode === 'tab' && (
+            <div className="fm-device-tablet-cam" aria-hidden="true">
+              <span className="fm-device-camera" />
+            </div>
+          )}
+          <div className="fm-device-screen" ref={screenRef}>
+            {/* ── Navigation ──────────────────────────────────────────────────────── */}
+            <nav className="pm-nav fm-nav" aria-label="FlatMark navigation">
+              <div
+                className="pm-nav__logo fm-nav__logo"
+                onClick={() => { setActivePage('home'); scrollToTop(); }}
+                role="button"
+                tabIndex={0}
+              >
           <span className="fm-nav__logo-icon">🏢</span>
           <div className="fm-nav__logo-text">
             <span className="fm-nav__logo-title">
@@ -172,19 +203,18 @@ Website: https://deccanidentity.com/demo/flatmark
             { id: 'about', label: 'About' },
             { id: 'towers', label: 'Towers' },
             { id: 'floorplans', label: 'Floor Plans' },
-            { id: 'amenities', label: 'Amenities' },
+            { id: 'highlights', label: 'Project Highlights' },
             { id: 'gallery', label: 'Gallery' },
-            { id: 'location', label: 'Location' },
             { id: 'contact', label: 'Contact' },
           ].map(p => {
-            const isActive = activePage === p.id;
+            const isActive = activePage === p.id || (p.id === 'highlights' && (activePage === 'amenities' || activePage === 'location'));
             return (
               <li key={p.id}>
                 <button
                   className={`fm-nav__btn ${isActive ? 'fm-nav__btn--active' : ''}`}
                   onClick={() => {
                     setActivePage(p.id);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    scrollToTop();
                   }}
                   aria-current={isActive ? 'page' : undefined}
                 >
@@ -206,7 +236,7 @@ Website: https://deccanidentity.com/demo/flatmark
             className="fm-btn-free-visit"
             onClick={() => {
               setActivePage('contact');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
+              scrollToTop();
             }}
             title="Book a Complimentary Site Visit with Pickup"
           >
@@ -214,8 +244,108 @@ Website: https://deccanidentity.com/demo/flatmark
             <span>Free Site Visit</span>
             <span className="fm-btn-free-visit__tag">FREE</span>
           </button>
+
+          <button
+            className={`pm-nav__hamburger ${mobileMenuOpen ? 'open' : ''}`}
+            onClick={() => setMobileMenuOpen(prev => !prev)}
+            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className="pm-hamburger-bar"></span>
+            <span className="pm-hamburger-bar"></span>
+            <span className="pm-hamburger-bar"></span>
+          </button>
         </div>
       </nav>
+
+      {/* Mobile Drawer */}
+      <div
+        className={`pm-mobile-drawer-overlay ${mobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden={!mobileMenuOpen}
+      >
+        <aside
+          className="pm-mobile-drawer"
+          onClick={e => e.stopPropagation()}
+          role="dialog"
+          aria-label="Mobile Navigation Menu"
+        >
+          <div className="pm-mobile-drawer__header">
+            <div
+              className="pm-nav__logo fm-nav__logo"
+              onClick={() => {
+                setActivePage('home');
+                scrollToTop();
+                setMobileMenuOpen(false);
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              <span className="fm-nav__logo-icon">🏢</span>
+              <div className="fm-nav__logo-text">
+                <span className="fm-nav__logo-title">Flat<span>Mark</span></span>
+                <span className="fm-nav__logo-sub">Skyline Residences</span>
+              </div>
+            </div>
+            <button
+              className="pm-mobile-drawer__close"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Close menu"
+            >
+              ✕
+            </button>
+          </div>
+
+          <nav className="pm-mobile-drawer__nav">
+            <div className="pm-mobile-nav__group">
+              <div className="pm-mobile-nav__label">Navigation Menu</div>
+              {[
+                { id: 'home', label: 'Home' },
+                { id: 'about', label: 'About' },
+                { id: 'towers', label: 'Towers' },
+                { id: 'floorplans', label: 'Floor Plans' },
+                { id: 'highlights', label: 'Project Highlights' },
+                { id: 'gallery', label: 'Gallery' },
+                { id: 'contact', label: 'Contact' },
+              ].map(p => (
+                <button
+                  key={p.id}
+                  className={`pm-mobile-nav__item ${activePage === p.id ? 'active' : ''}`}
+                  onClick={() => {
+                    setActivePage(p.id);
+                    scrollToTop();
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <span className="pm-mobile-nav__text">{p.label}</span>
+                  {activePage === p.id && <span className="pm-mobile-nav__dot">●</span>}
+                </button>
+              ))}
+            </div>
+          </nav>
+
+          <div className="pm-mobile-drawer__footer">
+            <button
+              className="btn btn-outline pm-mobile-drawer__btn"
+              onClick={() => {
+                setShowBrochureModal(true);
+                setMobileMenuOpen(false);
+              }}
+            >
+              📥 Download Brochure
+            </button>
+            <button
+              className="btn btn-primary pm-mobile-drawer__btn"
+              onClick={() => {
+                setActivePage('contact');
+                scrollToTop();
+                setMobileMenuOpen(false);
+              }}
+            >
+              🚗 Book Free Site Visit
+            </button>
+          </div>
+        </aside>
+      </div>
 
       {/* ── Main Router ─────────────────────────────────────────────────────── */}
       <main className="pm-main">
@@ -243,7 +373,7 @@ Website: https://deccanidentity.com/demo/flatmark
                     style={{ background: '#2563EB', color: '#fff', borderRadius: 'var(--radius-pill)', padding: '14px 28px', fontWeight: 700 }}
                     onClick={() => {
                       setActivePage('floorplans');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      scrollToTop();
                     }}
                   >
                     Explore Floor Plans →
@@ -252,7 +382,7 @@ Website: https://deccanidentity.com/demo/flatmark
                     className="fm-btn-free-visit fm-btn-free-visit--lg"
                     onClick={() => {
                       setActivePage('contact');
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      scrollToTop();
                     }}
                   >
                     <span className="fm-btn-free-visit__icon">🚗</span>
@@ -261,7 +391,7 @@ Website: https://deccanidentity.com/demo/flatmark
                   </button>
                   <button
                     className="btn btn-outline btn-lg"
-                    style={{ borderColor: 'rgba(37,99,235,0.4)', color: 'var(--text-primary)' }}
+                    style={{ borderColor: 'rgba(96,165,250,0.5)', color: '#ffffff', background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(6px)' }}
                     onClick={() => setShowBrochureModal(true)}
                   >
                     📥 Download Brochure
@@ -271,7 +401,7 @@ Website: https://deccanidentity.com/demo/flatmark
                     target="_blank"
                     rel="noreferrer"
                     className="btn btn-ghost btn-lg"
-                    style={{ border: '1px solid rgba(37,99,235,0.3)', color: '#2563EB' }}
+                    style={{ border: '1px solid rgba(96,165,250,0.5)', color: '#93c5fd', background: 'rgba(37,99,235,0.15)', backdropFilter: 'blur(6px)' }}
                   >
                     💬 WhatsApp Enquiry
                   </a>
@@ -739,45 +869,119 @@ Website: https://deccanidentity.com/demo/flatmark
           </section>
         )}
 
-        {/* 5. AMENITIES PAGE */}
-        {activePage === 'amenities' && (
-          <section className="pm-section container">
-            <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 2.5rem' }}>
+        {/* 5. PROJECT HIGHLIGHTS PAGE (Merged Amenities & Strategic Location Connectivity) */}
+        {(activePage === 'highlights' || activePage === 'amenities' || activePage === 'location') && (
+          <div className="pm-section container">
+            {/* Main Header */}
+            <div style={{ textAlign: 'center', maxWidth: '720px', margin: '0 auto 3rem' }}>
               <span className="fm-badge" style={{ marginBottom: '0.75rem' }}>
-                Resort-Grade Living
+                🌟 Signature Living &amp; Strategic Connectivity
               </span>
               <h2 className="pm-section__title" style={{ margin: '0 0 0.75rem' }}>
-                Clubhouse &amp; Podium Amenities
+                Project Highlights
               </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                Over 25 curated lifestyle and wellness facilities spread across a 6.5-acre elevated vehicular-free podium and multi-level clubhouse.
+              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', lineHeight: '1.6' }}>
+                Experience resort-grade clubhouse amenities, lush elevated podium deck, and immediate signal-free connectivity to Hyderabad's Financial District growth corridor.
               </p>
             </div>
 
-            <div className="fm-amenity-grid">
-              {AMENITIES.map((am, i) => (
-                <div key={i} className="fm-amenity-card">
-                  <div className="fm-amenity-icon">{am.icon}</div>
-                  <div className="fm-amenity-category">{am.category}</div>
-                  <h3 className="fm-amenity-title">{am.title}</h3>
-                  <p className="fm-amenity-desc">{am.desc}</p>
+            {/* PART 1: Clubhouse & Podium Amenities */}
+            <div style={{ marginBottom: '4.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid rgba(37, 99, 235, 0.12)' }}>
+                <div>
+                  <span className="fm-badge" style={{ marginBottom: '0.4rem' }}>Resort-Grade Living</span>
+                  <h3 style={{ fontSize: '1.65rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                    Clubhouse &amp; Podium Amenities
+                  </h3>
                 </div>
-              ))}
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem', fontWeight: 600 }}>
+                  25+ Curated Lifestyle Facilities
+                </div>
+              </div>
+
+              <div className="fm-amenity-grid">
+                {AMENITIES.map((am, i) => (
+                  <div key={i} className="fm-amenity-card">
+                    <div className="fm-amenity-icon">{am.icon}</div>
+                    <div className="fm-amenity-category">{am.category}</div>
+                    <h3 className="fm-amenity-title">{am.title}</h3>
+                    <p className="fm-amenity-desc">{am.desc}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-              <button
-                className="btn btn-primary btn-lg"
-                style={{ background: '#2563EB', color: '#fff', borderRadius: 'var(--radius-pill)', fontWeight: 700 }}
-                onClick={() => {
-                  setActivePage('contact');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-              >
-                Schedule a Visit to the Clubhouse →
-              </button>
+            {/* PART 2: Strategic Location & Growth Corridor */}
+            <div style={{ marginBottom: '3.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid rgba(37, 99, 235, 0.12)' }}>
+                <div>
+                  <span className="fm-badge" style={{ marginBottom: '0.4rem' }}>Strategic Connectivity</span>
+                  <h3 style={{ fontSize: '1.65rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                    Location &amp; Growth Corridor
+                  </h3>
+                </div>
+                <div style={{ color: '#2563EB', fontSize: '0.875rem', fontWeight: 700 }}>
+                  📍 Financial District, Hyderabad
+                </div>
+              </div>
+
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '1.75rem', maxWidth: '700px', lineHeight: '1.6' }}>
+                Immediate signal-free expressway access to Hyderabad's premier IT towers, multi-specialty healthcare networks, top-tier international educational institutions, and airport transit corridors.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
+                {[
+                  { place: 'Financial District & Wipro Circle', dist: '3.5 Km', time: '8 Mins', tag: 'IT & Global Tech' },
+                  { place: 'Continental & Care Hospitals', dist: '2.8 Km', time: '6 Mins', tag: 'Healthcare Hub' },
+                  { place: 'Oakridge & Delhi Public School', dist: '4.2 Km', time: '10 Mins', tag: 'Top International Schools' },
+                  { place: 'Inorbit Mall & Nexus Mall', dist: '8.0 Km', time: '15 Mins', tag: 'Retail & Dining' },
+                  { place: 'Rajiv Gandhi Int’l Airport', dist: '28 Km', time: '25 Mins', tag: 'Signal-Free via ORR' },
+                ].map((loc, idx) => (
+                  <div key={idx} className="fm-amenity-card" style={{ padding: '1.5rem' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      {loc.tag}
+                    </span>
+                    <h4 style={{ margin: '0.25rem 0', fontSize: '1.05rem', color: 'var(--text-primary)' }}>
+                      {loc.place}
+                    </h4>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 'auto', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📍 {loc.dist}</span>
+                      <strong style={{ fontSize: '1.2rem', color: '#2563EB' }}>⚡ {loc.time}</strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </section>
+
+            {/* Combined Action Banner */}
+            <div style={{ textAlign: 'center', background: 'rgba(37, 99, 235, 0.05)', border: '1.5px dashed rgba(37, 99, 235, 0.25)', borderRadius: '20px', padding: '2.5rem 1.5rem' }}>
+              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 0.5rem', color: 'var(--text-primary)' }}>
+                Experience FlatMark Skyline Residences in Person
+              </h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.925rem', maxWidth: '540px', margin: '0 auto 1.5rem', lineHeight: '1.6' }}>
+                Book a personalized tour of our 25,000 sq.ft clubhouse, podium leisure amenities, and model show-homes with complimentary door-to-door vehicle pickup.
+              </p>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-primary"
+                  style={{ background: '#2563EB', borderColor: '#2563EB', borderRadius: 'var(--radius-pill)', padding: '12px 28px', fontWeight: 700 }}
+                  onClick={() => {
+                    setActivePage('contact');
+                    scrollToTop();
+                  }}
+                >
+                  Schedule Site Visit &amp; Tour →
+                </button>
+                <button
+                  className="btn btn-outline"
+                  style={{ borderRadius: 'var(--radius-pill)', padding: '12px 24px', fontWeight: 700 }}
+                  onClick={() => setShowBrochureModal(true)}
+                >
+                  📥 Download Full Highlights Brochure
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* 6. GALLERY PAGE */}
@@ -901,58 +1105,6 @@ Website: https://deccanidentity.com/demo/flatmark
           </section>
         )}
 
-        {/* LOCATION PAGE */}
-        {activePage === 'location' && (
-          <section className="pm-section container">
-            <div style={{ textAlign: 'center', maxWidth: '680px', margin: '0 auto 2.5rem' }}>
-              <span className="fm-badge" style={{ marginBottom: '0.75rem' }}>
-                Strategic Connectivity
-              </span>
-              <h2 className="pm-section__title" style={{ margin: '0 0 0.75rem' }}>
-                Prime Financial District Growth Corridor
-              </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-                Immediate signal-free expressway access to Hyderabad's premier IT towers, multi-specialty healthcare networks, and international educational institutions.
-              </p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
-              {[
-                { place: 'Financial District & Wipro Circle', dist: '3.5 Km', time: '8 Mins', tag: 'IT & Global Tech' },
-                { place: 'Continental & Care Hospitals', dist: '2.8 Km', time: '6 Mins', tag: 'Healthcare Hub' },
-                { place: 'Oakridge & Delhi Public School', dist: '4.2 Km', time: '10 Mins', tag: 'Top International Schools' },
-                { place: 'Inorbit Mall & Nexus Mall', dist: '8.0 Km', time: '15 Mins', tag: 'Retail & Dining' },
-                { place: 'Rajiv Gandhi Int’l Airport', dist: '28 Km', time: '25 Mins', tag: 'Signal-Free via ORR' },
-              ].map((loc, idx) => (
-                <div key={idx} className="fm-amenity-card" style={{ padding: '1.5rem' }}>
-                  <span style={{ fontSize: '0.7rem', color: '#2563EB', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    {loc.tag}
-                  </span>
-                  <h4 style={{ margin: '0.25rem 0', fontSize: '1.05rem', color: 'var(--text-primary)' }}>
-                    {loc.place}
-                  </h4>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 'auto', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📍 {loc.dist}</span>
-                    <strong style={{ fontSize: '1.2rem', color: '#2563EB' }}>⚡ {loc.time}</strong>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ textAlign: 'center' }}>
-              <button
-                className="btn btn-primary"
-                style={{ background: '#2563EB', borderColor: '#2563EB', borderRadius: 'var(--radius-pill)', padding: '12px 28px', fontWeight: 700 }}
-                onClick={() => {
-                  setActivePage('contact');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-              >
-                Schedule Site Visit &amp; Route Guidance →
-              </button>
-            </div>
-          </section>
-        )}
 
         {/* 7. CONTACT / SITE VISIT PAGE */}
         {activePage === 'contact' && (
@@ -1149,7 +1301,73 @@ Website: https://deccanidentity.com/demo/flatmark
         )}
       </main>
 
+      {/* ── Footer ──────────────────────────────────────────────────────────── */}
+      <footer className="pm-footer" role="contentinfo">
+        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '2.5rem', marginBottom: '2.5rem' }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.35rem', color: '#2563EB', marginBottom: '0.75rem' }}>
+              FlatMark
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: '1.6', margin: '0 0 1rem' }}>
+              Premium high-rise gated community featuring 224 residences across 3 towers. Developed as a showcase template for DeccanIDentity.
+            </p>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              {PROJECT_INFO.rera}
+            </div>
+          </div>
 
+          <div>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+              Quick Navigation
+            </h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <li><button onClick={() => { setActivePage('home'); scrollToTop(); }} style={{ color: 'inherit' }}>Home Overview</button></li>
+              <li><button onClick={() => { setActivePage('towers'); scrollToTop(); }} style={{ color: 'inherit' }}>Three Towers</button></li>
+              <li><button onClick={() => { setActivePage('floorplans'); scrollToTop(); }} style={{ color: 'inherit' }}>Floor Plans &amp; Blueprints</button></li>
+              <li><button onClick={() => { setActivePage('highlights'); scrollToTop(); }} style={{ color: 'inherit' }}>Project Highlights</button></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+              Apartment Towers
+            </h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              <li>Tower A — The Azure (10 Floors · 2 &amp; 3 BHK)</li>
+              <li>Tower B — The Apex (12 Floors · 2, 3 &amp; 4 BHK)</li>
+              <li>Tower C — The Aria (8 Floors · 2 BHK Boutique)</li>
+              <li>Podium Deck — 45,000 Sq.Ft Greenery</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+              Sales &amp; Site Gallery
+            </h4>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
+              📍 {PROJECT_INFO.location}
+            </p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
+              📞 Phone: <strong>{siteConfig.phone}</strong>
+            </p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 1rem' }}>
+              💬 WhatsApp: <strong>{siteConfig.whatsapp}</strong>
+            </p>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Working Hours: 9:00 AM – 7:30 PM (All 7 Days)
+            </div>
+          </div>
+        </div>
+
+        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+          <div>© 2026 FlatMark Skyline Residences. All rights reserved.</div>
+          <div>Showcase Template by <Link to="/" style={{ color: '#2563EB', fontWeight: 600 }}>DeccanIDentity</Link></div>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+</div>
 
       {/* ── Brochure Modal ──────────────────────────────────────────────────── */}
       {showBrochureModal && (
@@ -1240,98 +1458,6 @@ Website: https://deccanidentity.com/demo/flatmark
           </div>
         </div>
       )}
-
-      {/* ── Footer ──────────────────────────────────────────────────────────── */}
-      <footer className="pm-footer" role="contentinfo">
-        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '2.5rem', marginBottom: '2.5rem' }}>
-          <div>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.35rem', color: '#2563EB', marginBottom: '0.75rem' }}>
-              FlatMark
-            </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: '1.6', margin: '0 0 1rem' }}>
-              Premium high-rise gated community featuring 224 residences across 3 towers. Developed as a showcase template for DeccanIDentity.
-            </p>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              {PROJECT_INFO.rera}
-            </div>
-          </div>
-
-          <div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
-              Quick Navigation
-            </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              <li><button onClick={() => { setActivePage('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ color: 'inherit' }}>Home Overview</button></li>
-              <li><button onClick={() => { setActivePage('towers'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ color: 'inherit' }}>Three Towers</button></li>
-              <li><button onClick={() => { setActivePage('floorplans'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ color: 'inherit' }}>Floor Plans &amp; Blueprints</button></li>
-              <li><button onClick={() => { setActivePage('amenities'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} style={{ color: 'inherit' }}>Podium Amenities</button></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
-              Apartment Towers
-            </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              <li>Tower A — The Azure (10 Floors · 2 &amp; 3 BHK)</li>
-              <li>Tower B — The Apex (12 Floors · 2, 3 &amp; 4 BHK)</li>
-              <li>Tower C — The Aria (8 Floors · 2 BHK Boutique)</li>
-              <li>Podium Deck — 45,000 Sq.Ft Greenery</li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
-              Sales &amp; Site Gallery
-            </h4>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
-              📍 {PROJECT_INFO.location}
-            </p>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
-              📞 Phone: <strong>{siteConfig.phone}</strong>
-            </p>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 1rem' }}>
-              💬 WhatsApp: <strong>{siteConfig.whatsapp}</strong>
-            </p>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Working Hours: 9:00 AM – 7:30 PM (All 7 Days)
-            </div>
-          </div>
-        </div>
-
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border)', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-          <div>© 2026 FlatMark Skyline Residences. All rights reserved.</div>
-          <div>Showcase Template by <Link to="/" style={{ color: '#2563EB', fontWeight: 600 }}>DeccanIDentity</Link></div>
-        </div>
-      </footer>
-
-      {/* Floating WhatsApp Action Button */}
-      <a
-        href={getWhatsAppUrl()}
-        target="_blank"
-        rel="noreferrer"
-        className="floating-wa"
-        aria-label="Enquire on WhatsApp"
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          zIndex: 99,
-          background: '#25D366',
-          color: '#ffffff',
-          width: '56px',
-          height: '56px',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '1.75rem',
-          boxShadow: '0 8px 24px rgba(37, 211, 102, 0.4)',
-          transition: 'transform 0.2s ease',
-        }}
-      >
-        💬
-      </a>
     </div>
   );
 }

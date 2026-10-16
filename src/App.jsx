@@ -3,6 +3,7 @@ import { Routes, Route, useLocation, Link } from 'react-router-dom';
 import Nav from './components/Nav.jsx';
 import Footer from './components/Footer.jsx';
 import FloatingWhatsApp from './components/FloatingWhatsApp.jsx';
+import AskAI from './components/AskAI.jsx';
 import Home from './pages/Home.jsx';
 import TemplatesPage from './pages/TemplatesPage.jsx';
 import IndustryPage from './pages/IndustryPage.jsx';
@@ -87,6 +88,11 @@ function ScrollToTop() {
 export default function App() {
   const location = useLocation();
   const isDemo = location.pathname.startsWith('/demo') || location.pathname.endsWith('/demo');
+  // Enable Ask AI for all templates: catalog, details, industry collections, and all 14 live demo templates
+  const isTemplate =
+    location.pathname.startsWith('/templates') ||
+    location.pathname.startsWith('/demo') ||
+    location.pathname.startsWith('/industries');
 
   return (
     <ErrorBoundary>
@@ -126,6 +132,7 @@ export default function App() {
         </Routes>
         {!isDemo && <Footer />}
         <FloatingWhatsApp />
+        {isTemplate && <AskAI />}
       </div>
     </ErrorBoundary>
   );
